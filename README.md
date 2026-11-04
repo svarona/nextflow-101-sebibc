@@ -372,7 +372,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-greeetings.nf` [furious_moriondo] revision: 1a8407e90e
+Launching `scripts/hello-greeetings.nf` [stupefied_elion] revision: e9c721484b
 
 WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
 ERROR ~ Cannot invoke method split() on null object
@@ -484,10 +484,43 @@ work/
 To specify a different output directory, different from `results/`:
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results -resume
 ```
 
-Now all the files are in the `my_results/` folder:
+Now all the files are in the `my_results/` folder and the processes were catched from the previous run:
+
+```bash
+Nextflow 26.10.5 is available - Please consider updating your version to it
+
+ N E X T F L O W   ~  version 26.10.4
+
+Launching `scripts/hello-greeetings.nf` [sleepy_khorana] revision: e9c721484b
+
+Input names: Alice,C,Bob,A,Charlie
+executor >  local (4)
+[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS (2) [100%] 3 of 3 ✔
+[dc/5deef9] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
+Input name: Alice
+Input name: C
+Input name: Bob
+Greetings: Hello Alice!
+Input name: A
+Greetings: Hello Bob!
+Input name: Charlie
+Greetings: Hello Charlie!
+All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
+
+Outputs:
+
+  /home/svarona/Repositories/nextflow-101-sebibc/my_results
+
+  greeting_files:
+    - individual_greetings/Charlie.txt
+    - individual_greetings/Alice.txt
+    - individual_greetings/Bob.txt
+
+  all_greetings_file: all_greetings/all_greetings.txt
+```
 
 ```bash
 $ tree my_results/
@@ -500,6 +533,30 @@ my_results/
     └── Charlie.txt
 
 3 directories, 4 files
+```
+
+## See the runs and clean
+
+I we want to see all the nextflow runs executed we can run:
+
+```bash
+$ nextflow log
+TIMESTAMP               DURATION        RUN NAME        STATUS  REVISION ID     SESSION ID                              COMMAND                                                                                              
+2026-11-04 11:01:45     -               furious_moriondo -       e9c721484b      edf909ad-1c5c-45eb-9f54-8b836fec84ff    nextflow run scripts/hello-greeetings.nf                                                           
+2026-11-04 11:04:28     3.2s            silly_knuth     OK      e9c721484b      2f337a89-1b78-4301-a78d-5b7c747f7e2c    nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie                                    
+2026-11-04 11:05:19     2.7s            sleepy_khorana  OK      e9c721484b      5437c287-86cd-4768-a31f-8cf82dfbc5d7    nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie -output-dir my_results -resume
+```
+
+We could re-run a nextflow revisión using:
+
+```bash
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results -resume sleepy_khorana
+```
+
+Or we can clean the work folders and runs just before the last run (`sleepy_khorana` in thsi example)
+
+```bash
+nextflow clean -before sleepy_khorana -f
 ```
 
 ## 
