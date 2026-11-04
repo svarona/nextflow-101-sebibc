@@ -35,7 +35,7 @@ nextflow -version
 
 ## Hellow world mini-script
 
-This is a minimum nextflow script modified from the official nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-world.nf).
+This is a minimum nextflow script modified from the official nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf).
 
 ```bash
 process SAY_HELLO {
@@ -60,7 +60,7 @@ workflow {
 We can just execute the script as follows:
 
 ```bash
-nextflow run scripts/min-hello-world.nf
+nextflow run scripts/min-hello-greeetings.nf
 ```
 
 We will see something like this:
@@ -70,7 +70,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/min-hello-world.nf` [condescending_ramachandran] revision: f6990be1ea
+Launching `scripts/min-hello-greeetings.nf` [condescending_ramachandran] revision: f6990be1ea
 
 executor >  local (1)
 [aa/b73289] SAY_HELLO [100%] 1 of 1 ✔
@@ -94,7 +94,7 @@ Output files:
 - `.exitcode`: Captures the exit code from the task. Hopefully 0 as succesfull task. Usefull to understand what is going on when you run out of memory or something else happend.
 - `output.txt`: The main output from the process.
 
-## Hellow world complete-script
+## Greetings complete-script
 
 ### Overview
 
@@ -359,10 +359,10 @@ results/
 
 #### No input run
 
-The script is stored inside `scripts/hello-world.nf` folder, so it is executed as follows: 
+The script is stored inside `scripts/hello-greeetings.nf` folder, so it is executed as follows: 
 
 ```bash
-nextflow run scripts/hello-world.nf
+nextflow run scripts/hello-greeetings.nf
 ```
 
 And we will see something like this:
@@ -372,22 +372,22 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-world.nf` [furious_moriondo] revision: 1a8407e90e
+Launching `scripts/hello-greeetings.nf` [furious_moriondo] revision: 1a8407e90e
 
 WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
 ERROR ~ Cannot invoke method split() on null object
 
- -- Check script 'scripts/hello-world.nf' at line: 129 or see '.nextflow.log' file for more details
+ -- Check script 'scripts/hello-greeetings.nf' at line: 129 or see '.nextflow.log' file for more details
 ```
 
 If we don't specify any input, as there's no default input in the code (we could have add it, but we didn't in this example), the pipeline crashes.
 
 #### Default run
 
-The script is stored inside `scripts/hello-world.nf` folder, so it is executed as follows: 
+The script is stored inside `scripts/hello-greeetings.nf` folder, so it is executed as follows: 
 
 ```bash
-nextflow run scripts/hello-world.nf --input 'Alice,C,Bob,A,Charlie'
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie'
 ```
 
 We will see something like this:
@@ -397,7 +397,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-world.nf` [silly_knuth] revision: e9c721484b
+Launching `scripts/hello-greeetings.nf` [silly_knuth] revision: e9c721484b
 
 Input names: Alice,C,Bob,A,Charlie
 [-        ] CREATE_GREETINGS:SAVE_GREETINGS    [  0%] 0 of 3
@@ -484,7 +484,7 @@ work/
 To specify a different output directory, different from `results/`:
 
 ```bash
-nextflow run scripts/hello-world.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results
 ```
 
 Now all the files are in the `my_results/` folder:
@@ -501,24 +501,5 @@ my_results/
 
 3 directories, 4 files
 ```
-
-### Key Nextflow concepts covered
-
-| Concept | Purpose |
-|---|---|
-| `process` | Defines a computational task. |
-| `input` / `output` | Declares process inputs and outputs. |
-| `val` | Receives a value as process input. |
-| `path` | Declares file inputs or outputs. |
-| `channel.of()` | Creates a channel from supplied values. |
-| `filter` | Selects channel elements according to a condition. |
-| `map` | Transforms channel elements. |
-| `view` | Prints channel elements for debugging. |
-| `collect` | Gathers all channel elements into a single list. |
-| `workflow` | Defines the organisation and execution of pipeline components. |
-| `take:` | Declares named workflow inputs. |
-| `emit:` | Exposes named workflow outputs. |
-| `publish:` | Selects outputs to publish from the entry workflow. |
-| `output {}` | Configures the publication of workflow outputs. |
 
 ## 
