@@ -123,17 +123,25 @@ The entry workflow is the main execution point of the pipeline. It creates the i
 The workflow receives a comma-separated list of names through the `params.input` parameter.
 
 ```groovy
-println "Input names: ${params.input}"
+    // Create a channel from the input parameter
+    println "Input string: ${params.input}"
+    input_ch = channel.of(params.input).view { "Input string: $it" }
+    println "Input string channel: ${input_ch}"
 
-names_ch = channel.fromList(
-    params.input.split(',').collect { it.trim() }
+    // Split the comma-separated input and create a channel
+
+    names_ch = channel.fromList(
+        params.input.split(',').collect { it.trim() }
+    )
+    names_ch.view { "Input name: $it" }
 )
 ```
 
 This expression uses several Groovy and Nextflow features:
 
 - `params.input`: accesses the workflow input parameter.
-- `println`: prints the input parameter directly to the console.
+- `println`: Displays values, the input params or the channel in this case, directly to the console.
+- `.view`: This prints the channels' content directly to the terminal, allowing us to verify its content.
 - `split(',')`: splits the input string into individual names.
 - `collect { it.trim() }`: removes leading and trailing whitespace from each name using the Groovy `collect()` method.
 - `channel.fromList()`: creates a channel emitting each element of the supplied list as an individual emission.
@@ -151,14 +159,6 @@ Alice
 Bob
 Charlie
 ```
-
-#### Inspecting the input channel
-
-```groovy
-names_ch.view { "Input name: $it" }
-```
-
-This prints the names received by the workflow, allowing us to verify the initial input data.
 
 #### Invoking the workflow: CREATE_GREETINGS
 
@@ -399,37 +399,38 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
 Launching `scripts/hello-greeetings.nf` [silly_knuth] revision: e9c721484b
 
-Input names: Alice,C,Bob,A,Charlie
-[-        ] CREATE_GREETINGS:SAVE_GREETINGS    [  0%] 0 of 3
+Input string: Alice,C,Bob,A,Charlie
+Input string channel: DataflowBroadcast around DataflowStream[?]
+[-        ] CREATE_GREETINGS:SAVE_GREETINGS    -
+[-        ] CREATE_GREETINGS:COLLECT_GREETINGS -
+Input string: Alice,C,Bob,A,Charlie
+executor >  local (1)
+[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS    [  0%] 0 of 3
 [-        ] CREATE_GREETINGS:COLLECT_GREETINGS [  0%] 0 of 1
-Input name: Alice
-Greetings: Hello Alice!
+Input string: Alice,C,Bob,A,Charlie
 executor >  local (4)
 [d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS (3) [100%] 3 of 3 ✔
 [dc/5deef9] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
 Input name: Alice
-Greetings: Hello Alice!
-executor >  local (4)
-[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS (3) [100%] 3 of 3 ✔
-[dc/5deef9] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
+Input string: Alice,C,Bob,A,Charlie
 Input name: Alice
-Greetings: Hello Alice!
-All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
-Greetings: Hello Bob!
-Greetings: Hello Charlie!
 Input name: C
 Input name: Bob
 Input name: A
 Input name: Charlie
+Greetings: Hello Alice!
+Greetings: Hello Bob!
+Greetings: Hello Charlie!
+All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
 
 Outputs:
 
-  /home/svarona/Repositories/nextflow-101-sebibc/results
+  /home/svarona/Repositories/nextflow-101-sebibc/my_results
 
   greeting_files:
-    - individual_greetings/Bob.txt
-    - individual_greetings/Alice.txt
     - individual_greetings/Charlie.txt
+    - individual_greetings/Alice.txt
+    - individual_greetings/Bob.txt
 
   all_greetings_file: all_greetings/all_greetings.txt
 ```

@@ -123,8 +123,12 @@ workflow CREATE_GREETINGS {
 workflow {
 
     main:
+    // Create a channel from the input parameter
+    println "Input string: ${params.input}"
+    input_ch = channel.of(params.input).view { "Input string: $it" }
+    println "Input string channel: ${input_ch}"
+
     // Split the comma-separated input and create a channel
-    println "Input names: ${params.input}"
 
     names_ch = channel.fromList(
         params.input.split(',').collect { it.trim() }
