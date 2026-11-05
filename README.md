@@ -272,7 +272,7 @@ The `emit` option assigns the name `result` to this process output, making it ac
 
 ###### COLLECT_GREETINGS
 
-Unlike `SAVE_GREETINGS`, this process receives the complete list containing all the greeting messages as a single input value and writes them into a single text file. Therefore, it executes only once, regardless of the number of greetings in the list.
+Unlike `SAVE_GREETINGS`, this process receives the complete list containing all the greeting messages as a single input value, and also takes the `--batch` param, and writes them into a single text file with the batch. Therefore, it executes only once, regardless of the number of greetings in the list.
 
 ```groovy
 COLLECT_GREETINGS(all_greetings)
@@ -280,6 +280,7 @@ COLLECT_GREETINGS(all_greetings)
 
 **Input:**
 - `greetings`: a list of strings containing all generated greetings.
+- `batch`: CLI param with a string
 
 **Output:**
 - `all_greetings.txt`: a file containing all greetings, one per line.
@@ -292,7 +293,7 @@ Hello Bob!
 Hello Charlie!
 ```
 
-The process uses `greetings.join('\n')` to concatenate all greetings into a single string separated by newline characters. The `printf` command writes this string into `all_greetings.txt`, adding a newline after each greeting.
+The process uses `greetings.join('\n')` to concatenate all greetings into a single string separated by newline characters. The `printf` command writes this string into `{batch}_all_greetings.txt`, adding a newline after each greeting.
 
 ##### Workflow outputs: `emit:`
 
@@ -375,6 +376,8 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 Launching `scripts/hello-greeetings.nf` [stupefied_elion] revision: e9c721484b
 
 WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
+Input string: null
+Input string channel: DataflowBroadcast around DataflowStream[?]
 ERROR ~ Cannot invoke method split() on null object
 
  -- Check script 'scripts/hello-greeetings.nf' at line: 129 or see '.nextflow.log' file for more details
@@ -387,7 +390,7 @@ If we don't specify any input, as there's no default input in the code (we could
 The script is stored inside `scripts/hello-greeetings.nf` folder, so it is executed as follows: 
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie'
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "first"
 ```
 
 We will see something like this:
@@ -397,21 +400,20 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-greeetings.nf` [silly_knuth] revision: e9c721484b
+Launching `scripts/hello-greeetings.nf` [cheeky_colden] revision: 64301b6531
 
 Input string: Alice,C,Bob,A,Charlie
 Input string channel: DataflowBroadcast around DataflowStream[?]
 [-        ] CREATE_GREETINGS:SAVE_GREETINGS    -
 [-        ] CREATE_GREETINGS:COLLECT_GREETINGS -
 Input string: Alice,C,Bob,A,Charlie
-executor >  local (1)
-[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS    [  0%] 0 of 3
-[-        ] CREATE_GREETINGS:COLLECT_GREETINGS [  0%] 0 of 1
+executor >  local (4)
+[61/41a121] CREATE_GREETINGS:SAVE_GREETINGS (1) [100%] 3 of 3 ✔
+[e9/58164c] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
 Input string: Alice,C,Bob,A,Charlie
 executor >  local (4)
-[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS (3) [100%] 3 of 3 ✔
-[dc/5deef9] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
-Input name: Alice
+[61/41a121] CREATE_GREETINGS:SAVE_GREETINGS (1) [100%] 3 of 3 ✔
+[e9/58164c] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
 Input string: Alice,C,Bob,A,Charlie
 Input name: Alice
 Input name: C
@@ -425,14 +427,14 @@ All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
 
 Outputs:
 
-  /home/svarona/Repositories/nextflow-101-sebibc/my_results
+  /home/svarona/Repositories/nextflow-101-sebibc/results
 
   greeting_files:
-    - individual_greetings/Charlie.txt
-    - individual_greetings/Alice.txt
     - individual_greetings/Bob.txt
+    - individual_greetings/Alice.txt
+    - individual_greetings/Charlie.txt
 
-  all_greetings_file: all_greetings/all_greetings.txt
+  all_greetings_file: all_greetings/first_all_greetings.txt
 ```
 
 We can see that the results were saved into the `results/` folder:
@@ -440,7 +442,7 @@ We can see that the results were saved into the `results/` folder:
 ```bash
 results/
 ├── all_greetings
-│   └── all_greetings.txt
+│   └── first_all_greetings.txt
 └── individual_greetings
     ├── Alice.txt
     ├── Bob.txt
@@ -452,7 +454,7 @@ results/
 We can read the content of the different files:
 
 ```bash
-$ cat results/all_greetings/all_greetings.txt 
+$ cat results/all_greetings/first_all_greetings.txt
 Hello Alice!
 Hello Bob!
 Hello Charlie!
@@ -485,7 +487,7 @@ work/
 To specify a different output directory, different from `results/`:
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results -resume
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "second" -output-dir my_results -resume
 ```
 
 Now all the files are in the `my_results/` folder and the processes were catched from the previous run:
@@ -520,14 +522,14 @@ Outputs:
     - individual_greetings/Alice.txt
     - individual_greetings/Bob.txt
 
-  all_greetings_file: all_greetings/all_greetings.txt
+  all_greetings_file: all_greetings/second_all_greetings.txt
 ```
 
 ```bash
 $ tree my_results/
 my_results/
 ├── all_greetings
-│   └── all_greetings.txt
+│   └── second_all_greetings.txt
 └── individual_greetings
     ├── Alice.txt
     ├── Bob.txt
