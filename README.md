@@ -70,18 +70,18 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/min-hello-greeetings.nf` [condescending_ramachandran] revision: f6990be1ea
+Launching `scripts/min-hello-greeetings.nf` [serene_bernard] revision: f6990be1ea
 
 executor >  local (1)
-[aa/b73289] SAY_HELLO [100%] 1 of 1 ✔
+[f9/44658b] SAY_HELLO [100%] 1 of 1 ✔
 ```
 
 Podemos ver el contenido de la carpeta work (el hash de la carpeta work varía de un run a otro)
 
 ```bash
-ls -a work/aa/b73289*
-cat work/aa/b73289*/.command.sh
-cat work/aa/b73289*/output.txt
+ls -a work/f9/44658b*
+cat work/f9/44658b*/.command.sh
+cat work/f9/44658b*/output.txt
 ```
 
 Output files:
@@ -373,7 +373,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-greeetings.nf` [stupefied_elion] revision: e9c721484b
+Launching `scripts/hello-greeetings.nf` [gigantic_liskov] revision: 64301b6531
 
 WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
 Input string: null
@@ -400,7 +400,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-greeetings.nf` [cheeky_colden] revision: 64301b6531
+Launching `scripts/hello-greeetings.nf` [ridiculous_euclid] revision: 64301b6531
 
 Input string: Alice,C,Bob,A,Charlie
 Input string channel: DataflowBroadcast around DataflowStream[?]
@@ -468,16 +468,16 @@ As we can see, this generated more folders in the `work` folder, so every proces
 ```bash
 $ tree -L 2 work/
 work/
-├── 3f
-│   └── 722763e56d917007397c1c19837bd8
-├── 6b
-│   └── b205de851c4104248edcc0b056c390
-├── aa
-│   └── b73289c6693ce4a69cb3ab357eeda2
-├── d9
-│   └── a12488883b82ea3f95714466bb0859
-└── dc
-    └── 5deef9840b93925549dfc31b1d4f7c
+├── 2b
+│   └── bf9b0af4a803841bd89f4a83355bda
+├── 32
+│   └── b17aec35f72470398cc2f893058d28
+├── a1
+│   └── 6a8da6cec03f5e7015ada92fabef58
+├── e6
+│   └── 055833133c0eaffa0f15ff87751433
+└── f9
+    └── 44658bc7aba4cd5b07d9b411b03f29
 
 11 directories, 0 files
 ```
@@ -497,19 +497,21 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/hello-greeetings.nf` [sleepy_khorana] revision: e9c721484b
+Launching `scripts/hello-greeetings.nf` [cheesy_shockley] revision: 64301b6531
 
-Input names: Alice,C,Bob,A,Charlie
-executor >  local (4)
-[d9/a12488] CREATE_GREETINGS:SAVE_GREETINGS (2) [100%] 3 of 3 ✔
-[dc/5deef9] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
+Input string: Alice,C,Bob,A,Charlie
+Input string channel: DataflowBroadcast around DataflowStream[?]
+executor >  local (1)
+[a1/6a8da6] CREATE_GREETINGS:SAVE_GREETINGS (2) [100%] 3 of 3, cached: 3 ✔
+[22/58d828] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
 Input name: Alice
+Input string: Alice,C,Bob,A,Charlie
 Input name: C
 Input name: Bob
-Greetings: Hello Alice!
 Input name: A
-Greetings: Hello Bob!
 Input name: Charlie
+Greetings: Hello Alice!
+Greetings: Hello Bob!
 Greetings: Hello Charlie!
 All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
 
@@ -519,11 +521,33 @@ Outputs:
 
   greeting_files:
     - individual_greetings/Charlie.txt
-    - individual_greetings/Alice.txt
     - individual_greetings/Bob.txt
+    - individual_greetings/Alice.txt
 
   all_greetings_file: all_greetings/second_all_greetings.txt
 ```
+
+We can see that the work folder din't change:
+
+```bash
+work/
+├── 22
+│   └── 58d828b883ce603eeb1efe623eb2a7
+├── 2b
+│   └── bf9b0af4a803841bd89f4a83355bda
+├── 32
+│   └── b17aec35f72470398cc2f893058d28
+├── a1
+│   └── 6a8da6cec03f5e7015ada92fabef58
+├── e6
+│   └── 055833133c0eaffa0f15ff87751433
+└── f9
+    └── 44658bc7aba4cd5b07d9b411b03f29
+
+13 directories, 0 files
+```
+
+But we have all the files in this other folder
 
 ```bash
 $ tree my_results/
@@ -542,24 +566,46 @@ my_results/
 
 I we want to see all the nextflow runs executed we can run:
 
+We can execute:
+
 ```bash
-$ nextflow log
-TIMESTAMP               DURATION        RUN NAME        STATUS  REVISION ID     SESSION ID                              COMMAND                                                                                              
-2026-11-04 11:01:45     -               furious_moriondo -       e9c721484b      edf909ad-1c5c-45eb-9f54-8b836fec84ff    nextflow run scripts/hello-greeetings.nf                                                           
-2026-11-04 11:04:28     3.2s            silly_knuth     OK      e9c721484b      2f337a89-1b78-4301-a78d-5b7c747f7e2c    nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie                                    
-2026-11-04 11:05:19     2.7s            sleepy_khorana  OK      e9c721484b      5437c287-86cd-4768-a31f-8cf82dfbc5d7    nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie -output-dir my_results -resume
+nextflow log
+```
+
+And we will see all the processes that we executed, succesfully or not:
+
+```bash
+TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION ID     SESSION ID                             COMMAND                                                                                                             
+2026-11-05 13:07:33     2.3s            serene_bernard          OK      f6990be1ea      8f292219-0c3d-48af-bfae-ecd404baa123   nextflow run scripts/min-hello-greeetings.nf                                                                        
+2026-11-05 13:08:45     -               gigantic_liskov         -       64301b6531      2f1cacf5-6023-4d45-9d6a-06f041ec772c   nextflow run scripts/hello-greeetings.nf                                                                            
+2026-11-05 13:09:08     2.5s            ridiculous_euclid       OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie --batch first                                
+2026-11-05 13:10:06     2.4s            cheesy_shockley         OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie --batch second -output-dir my_results -resume
 ```
 
 We could re-run a nextflow revisión using:
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results -resume sleepy_khorana
+nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results --batch second -resume ridiculous_euclid
 ```
 
-Or we can clean the work folders and runs just before the last run (`sleepy_khorana` in thsi example)
+We can see what we can clean in the work folders and runs just before a specific run (`cheesy_shockley` in thsi example)
 
 ```bash
-nextflow clean -before sleepy_khorana -f
+nextflow clean -before cheesy_shockley -n
+```
+
+This outputs something like this:
+
+```bash
+Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/f9/44658bc7aba4cd5b07d9b411b03f29
+Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/32/b17aec35f72470398cc2f893058d28
+```
+
+Or just clean all the log runs and work folders except one we want
+
+```bash
+nextflow clean -f -but cheesy_shockley
+nextflow log
 ```
 
 ## 
