@@ -2,7 +2,7 @@
 
 Nextflow 101 workshop for the II SEBIBC Congress 2026
 
-This is a simplified 60 minutes workshop to get started with Nextflow, designed for the II SEBIBC Congress in 2026.
+This is a simplified 60-minute workshop to get started with Nextflow, designed for the II SEBIBC Congress in 2026.
 
 All the scripts that will be used or created during the training are available in the [`scripts/`](./scripts/) folder.
 
@@ -33,9 +33,9 @@ nextflow -version
 
 > Note: This training has been designed with `nf-core/tools version 4.2.1` and `Nextflow version 26.10.4`
 
-## Hellow world mini-script
+## Hello world mini-script
 
-This is a minimum nextflow script modified from the official nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf).
+This is a minimal Nextflow script adapted from the official Nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf).
 
 ```bash
 process SAY_HELLO {
@@ -76,7 +76,7 @@ executor >  local (1)
 [f9/44658b] SAY_HELLO [100%] 1 of 1 ✔
 ```
 
-Podemos ver el contenido de la carpeta work (el hash de la carpeta work varía de un run a otro)
+We can inspect the contents of the work directory (the work directory hash varies from one run to another):
 
 ```bash
 ls -a work/f9/44658b*
@@ -89,9 +89,9 @@ Output files:
 - `.command.err`: Standard error
 - `.command.log`: Standard error and standard output in logical order as they came out.
 - `.command.out`: Standard output
-- `.command.run`: What Nextflow actually executes. Depends depending if you are running it locally or in SLRUM.
+- `.command.run`: What Nextflow actually executes. Depends depending if you are running it locally or in SLURM.
 - `.command.sh`: The generated script which come from the process. The `.command.run` file executes this file.
-- `.exitcode`: Captures the exit code from the task. Hopefully 0 as succesfull task. Usefull to understand what is going on when you run out of memory or something else happend.
+- `.exitcode`: Captures the exit code from the task. Ideally, this should be 0 for a successful task. This is useful to understand what is happening when you run out of memory or something else goes wrong.
 - `output.txt`: The main output from the process.
 
 ## Greetings complete-script
@@ -166,7 +166,7 @@ Charlie
 CREATE_GREETINGS(names_ch)
 ```
 
-The input channel is passed to `CREATE_GREETINGS`, which performs the filtering, transformation and process execution steps.
+The input channel is passed to `CREATE_GREETINGS`, which performs the filtering, transformation, and process execution steps.
 
 A **workflow** defines how processes and channels are connected to create a complete computational pipeline.
 
@@ -364,7 +364,7 @@ This is an schema on how this mini-minipeline works:
 
 #### No input run
 
-The script is stored inside `scripts/hello-greeetings.nf` folder, so it is executed as follows: 
+The script is stored in the `scripts/hello-greeetings.nf` folder, so it is executed as follows:
 
 ```bash
 nextflow run scripts/hello-greeetings.nf
@@ -391,7 +391,7 @@ If we don't specify any input, as there's no default input in the code (we could
 
 #### Default run
 
-The script is stored inside `scripts/hello-greeetings.nf` folder, so it is executed as follows: 
+The script is stored in the `scripts/hello-greeetings.nf` folder, so it is executed as follows:
 
 ```bash
 nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "first"
@@ -467,7 +467,7 @@ $ cat results/individual_greetings/Alice.txt
 Hello Alice!
 ```
 
-As we can see, this generated more folders in the `work` folder, so every process is individual and cant overlapp or override any other process:
+As we can see, this generated more folders in the `work` folder, so every process is individual and can't overlap or override any other process:
 
 ```bash
 $ tree -L 2 work/
@@ -494,7 +494,7 @@ To specify a different output directory, different from `results/`:
 nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "second" -output-dir my_results -resume
 ```
 
-Now all the files are in the `my_results/` folder and the processes were catched from the previous run:
+Now all the files are in the `my_results/` folder, and the processes were cached from the previous run:
 
 ```bash
 Nextflow 26.10.5 is available - Please consider updating your version to it
@@ -531,7 +531,7 @@ Outputs:
   all_greetings_file: all_greetings/second_all_greetings.txt
 ```
 
-We can see that the work folder din't change:
+We can see that the work folder didn't change:
 
 ```bash
 work/
@@ -568,7 +568,7 @@ my_results/
 
 ## See the runs and clean
 
-I we want to see all the nextflow runs executed we can run:
+If we want to see all the Nextflow runs executed, we can run:
 
 We can execute:
 
@@ -576,7 +576,7 @@ We can execute:
 nextflow log
 ```
 
-And we will see all the processes that we executed, succesfully or not:
+And we will see all the processes that we executed, successfully or not:
 
 ```bash
 TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION ID     SESSION ID                             COMMAND                                                                                                             
@@ -586,26 +586,26 @@ TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION
 2026-11-05 13:10:06     2.4s            cheesy_shockley         OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie --batch second -output-dir my_results -resume
 ```
 
-We could re-run a nextflow revisión using:
+We could re-run a Nextflow revision using:
 
 ```bash
 nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results --batch second -resume ridiculous_euclid
 ```
 
-We can see what we can clean in the work folders and runs just before a specific run (`cheesy_shockley` in thsi example)
+We can see what can be cleaned in the work directories and previous runs just before a specific run (`cheesy_shockley` in this example):
 
 ```bash
 nextflow clean -before cheesy_shockley -n
 ```
 
-This outputs something like this:
+This produces output similar to the following:
 
 ```bash
 Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/f9/44658bc7aba4cd5b07d9b411b03f29
 Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/32/b17aec35f72470398cc2f893058d28
 ```
 
-Or just clean all the log runs and work folders except one we want
+Or simply clean all the previous log runs and work folders except the one we want to keep:
 
 ```bash
 nextflow clean -f -but cheesy_shockley
@@ -614,13 +614,13 @@ nextflow log
 
 ## Creating a pipeline with nf-core tools
 
-We already have the nf-core tools installed in our environment, so we are going to run the commands to generate the pipeline
+We already have the nf-core tools installed in our environment, so we are going to run the commands needed to generate the pipeline
 
 ```bash
 nf-core pipeline create
 ```
 
-We are going to follow the interactive CLI to select wat we want or not. This command just created all these files:
+We are going to follow the interactive CLI to select what we want or do not want. This command just created all these files:
 
 ```bash
 bu-isciii-test-pipeline/
@@ -719,9 +719,9 @@ bu-isciii-test-pipeline/
 
 ### 1. Main pipeline
 
-In the same pipeline folder we have the main pipeline's nextflow code which is `main.nf`. This script contains the following:
+In the same pipeline folder, we have the main pipeline's Nextflow code: `main.nf`. This script contains the following:
 
-This script is the **entry point and orchestrator** of an nf-core pipeline, it mainly connects the pipeline initialisation, the main analysis workflow, and the completion tasks.
+This script is the **entry point and orchestrator** of an nf-core pipeline. It mainly connects the pipeline initialisation, the main analysis workflow, and the completion tasks.
 
 #### 1. Imports
 
@@ -945,11 +945,11 @@ For example:
 ]
 ```
 
-The `meta` object contains information that identifies and describes the sample, such as its `id` or wether the reads are paire-end or not, and can be extended with additional metadata when needed.
+The `meta` object contains information that identifies and describes the sample, such as its `id` or whether the reads are paired-end or not, and it can be extended with additional metadata when needed.
 
 The `meta` object is created when the input samplesheet is parsed during [`PIPELINE_INITIALISATION`](./bu-isciii-test-pipeline/subworkflows/local/utils_nfcore_test-pipeline_pipeline/main.nf). 
 
-Here the input samplesheet is parsed here:
+Here, the input samplesheet is parsed:
 
 ```groovy
 channel
@@ -1093,7 +1093,7 @@ This produces a summary of software versions grouped by process.
 
 #### 6. Collecting version information
 
-The script combines the traditional `ch_versions` channel with the versions obtained through the topic, but this is for older versions of nextflow, so we could remove everything related with `ch_versions` or keep it as it is an empty channel.
+The script combines the traditional `ch_versions` channel with the versions obtained through the topic. This is intended for older versions of Nextflow, so we could remove everything related to `ch_versions` or keep it because it is an empty channel.
 
 ```groovy
 softwareVersionsToYAML(
@@ -1316,7 +1316,7 @@ The process defines three outputs:
 tuple val(meta), path("*.html"), emit: html
 ```
 
-2. The ZIP output that contains metadata and the ZIP file that can be accesses as `FASTQC.out.zip`
+2. The ZIP output that contains metadata and the ZIP file that can be accessed as `FASTQC.out.zip`
 
 ```groovy
 tuple val(meta), path("*.zip"), emit: zip
@@ -1517,7 +1517,7 @@ printf "%s %s\n" ${rename_to} | while read old_name new_name; do
 done
 ```
 
-This creates symbolic links from the original staged filenames to the desired filenames. It checks whether the target already exists, if the file does not already exist it generates the simbolik links.
+This creates symbolic links from the original staged filenames to the desired filenames. It checks whether the target already exists, if the file does not already exist it generates the symbolic links.
 
 ###### Running FastQC
 
@@ -1563,7 +1563,7 @@ It is mainly organised into the following sections:
 
 #### 1. Pipeline parameters
 
-The `params` block defines the DEFAULT valued for the different parameters that can be provided to the pipeline from the command line.
+The `params` block defines the default values for the different parameters that can be provided to the pipeline from the command line.
 
 ```groovy
 params {
@@ -1599,7 +1599,7 @@ publish_dir_mode = 'copy'
 
 The configuration is split into several files using `includeConfig`.
 
-1. Base configuration: This loads general default configuration. This congiguration can overwitte configurations from this `nextflow.config` file.
+1. Base configuration: This loads general default configuration. This configuration can overwrite settings from this `nextflow.config` file.
 
 ```groovy
 includeConfig 'conf/base.config'
@@ -1897,19 +1897,19 @@ It can also configure things such as:
 
 #### 3. `<profile>.config`
 
-Finally we have profile's specific config files such as [`test.config`](./bu-isciii-test-pipeline/conf/test.config). The purpose is to provide a configuration sepcific to a purpose, like performing a quick pipeline test. In this case the purpose is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
+Finally, we have profile-specific config files such as [`test.config`](./bu-isciii-test-pipeline/conf/test.config). Their purpose is to provide a configuration specific to a given use case, such as performing a quick pipeline test. In this case, the goal is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
 
 
 So, after all these configurations and params, summarizing the priority order is:
 
-For process configuration, there's a rule for priority:
+For process configuration, there is a priority rule:
 
 1. Process configuration settings (without a selector)
 2. Process directives in the process definition
 3. withLabel selectors matching any of the process labels
 4. withName selectors matching the process name
 5. withName selectors matching the process included alias
-6. withName selectors matching the process fully qualified nam
+6. withName selectors matching the process fully qualified name
 
 ![process_priority](./img/process_priority.png)
 
@@ -1921,13 +1921,13 @@ For parameters:
 
 Now we can move forward to a quick test run. We can execute:
 
-> Note: I need a local file because mi laptop doesn't have enough memory for the test to run.
+> Note: I need a local file because my laptop does not have enough memory to run the test.
 
 ```bash
 nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
 ```
 
-This will attempt to create the conda images unless you have them cachaed already.
+This will attempt to create the conda images unless you have them cached already.
 
 And it will run something like this:
 
@@ -1981,7 +1981,7 @@ We can install additional software using the nf-core tools
 nf-core modules install
 ```
 
-And then write the name of the module you want to add to the pipeline.
+Then, write the name of the module you want to add to the pipeline.
 
 A lot of new files will be updated.
 
@@ -1998,13 +1998,13 @@ SAMPLE2_PE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/il
 SAMPLE3_SE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz,
 ```
 
-And once created we can run:
+Once created, we can run:
 
 ```bash
 nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir preproqc_results -c local.config --input samplesheet.csv
 ```
 
-Y veremos algo asi:
+We will see something like this:
 
 ```bash
 
