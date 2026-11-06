@@ -356,6 +356,10 @@ results/
     └── all_greetings.txt
 ```
 
+This is an schema on how this mini-minipeline works:
+
+![hello-greetings](./img/hello-greetings_schema.png)
+
 ### Running the workflow
 
 #### No input run
@@ -608,4 +612,1325 @@ nextflow clean -f -but cheesy_shockley
 nextflow log
 ```
 
-## 
+## Creating a pipeline with nf-core tools
+
+We already have the nf-core tools installed in our environment, so we are going to run the commands to generate the pipeline
+
+```bash
+nf-core pipeline create
+```
+
+We are going to follow the interactive CLI to select wat we want or not. This command just created all these files:
+
+```bash
+bu-isciii-test-pipeline/
+├── CHANGELOG.md
+├── CITATIONS.md
+├── LICENSE
+├── README.md
+├── assets
+│   ├── methods_description_template.yml
+│   ├── multiqc_config.yml
+│   ├── samplesheet.csv
+│   └── schema_input.json
+├── conf
+│   ├── base.config
+│   ├── containers_conda_lock_files_amd64.config
+│   ├── containers_conda_lock_files_arm64.config
+│   ├── containers_docker_amd64.config
+│   ├── containers_docker_arm64.config
+│   ├── containers_singularity_https_amd64.config
+│   ├── containers_singularity_https_arm64.config
+│   ├── containers_singularity_oras_amd64.config
+│   ├── containers_singularity_oras_arm64.config
+│   ├── igenomes.config
+│   ├── igenomes_ignored.config
+│   ├── modules.config
+│   ├── test.config
+│   └── test_full.config
+├── docs
+│   ├── CONTRIBUTING.md
+│   ├── README.md
+│   ├── output.md
+│   └── usage.md
+├── main.nf
+├── modules
+│   └── nf-core
+│       ├── fastqc
+│       │   ├── environment.yml
+│       │   ├── main.nf
+│       │   ├── meta.yml
+│       │   └── tests
+│       │       ├── main.nf.test
+│       │       └── main.nf.test.snap
+│       └── multiqc
+│           ├── environment.yml
+│           ├── main.nf
+│           ├── meta.yml
+│           └── tests
+│               ├── custom_prefix.config
+│               ├── main.nf.test
+│               ├── main.nf.test.snap
+│               └── nextflow.config
+├── modules.json
+├── nextflow.config
+├── nextflow_schema.json
+├── nf-test.config
+├── ro-crate-metadata.json
+├── subworkflows
+│   ├── local
+│   │   └── utils_nfcore_test-pipeline_pipeline
+│   │       └── main.nf
+│   └── nf-core
+│       ├── utils_nextflow_pipeline
+│       │   ├── main.nf
+│       │   ├── meta.yml
+│       │   └── tests
+│       │       ├── main.function.nf.test
+│       │       ├── main.function.nf.test.snap
+│       │       ├── main.workflow.nf.test
+│       │       └── nextflow.config
+│       ├── utils_nfcore_pipeline
+│       │   ├── main.nf
+│       │   ├── meta.yml
+│       │   └── tests
+│       │       ├── main.function.nf.test
+│       │       ├── main.function.nf.test.snap
+│       │       ├── main.nf.test
+│       │       ├── main.nf.test.snap
+│       │       ├── main.workflow.nf.test
+│       │       ├── main.workflow.nf.test.snap
+│       │       └── nextflow.config
+│       └── utils_nfschema_plugin
+│           ├── main.nf
+│           ├── meta.yml
+│           └── tests
+│               ├── main.nf.test
+│               ├── nextflow.config
+│               └── nextflow_schema.json
+├── tests
+│   ├── default.nf.test
+│   └── nextflow.config
+└── workflows
+    └── test-pipeline.nf
+
+22 directories, 68 files
+```
+
+### 1. Main pipeline
+
+In the same pipeline folder we have the main pipeline's nextflow code which is `main.nf`. This script contains the following:
+
+This script is the **entry point and orchestrator** of an nf-core pipeline, it mainly connects the pipeline initialisation, the main analysis workflow, and the completion tasks.
+
+#### 1. Imports
+
+```groovy
+include { TEST-PIPELINE }           from './workflows/test-pipeline'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline' 
+include { PIPELINE_COMPLETION }     from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
+include { getGenomeAttribute }      from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
+```
+
+Three types of reusable components are imported:
+
+- `TEST-PIPELINE`: the workflow containing the actual analysis logic.
+- `PIPELINE_INITIALISATION` and `PIPELINE_COMPLETION`: nf-core subworkflows that handle common tasks before and after the analysis.
+- `getGenomeAttribute`: a reusable function.
+
+#### 2. `getGenomeAttribute()`
+
+```groovy
+params.fasta = getGenomeAttribute('fasta')
+```
+
+This function can retrieve an attribute of a reference genome from the iGenomes configuration.
+
+This is useful in pipelines that use standard reference genomes. In this template it is marked as a TODO because the example pipeline does not actually need a FASTA file. We can remove it.
+
+#### 3. Pipeline workflow
+
+This workflow acts as an intermediate orchestration layer.
+
+It receives the samplesheet and calls the actual analysis workflow:
+
+```groovy
+workflow BUISCIII_TEST-PIPELINE {
+
+    take:
+    samplesheet
+
+    main:
+```
+
+Then it calls to the nextflow script inside `workflows` folder that we will see later. A workflow can therefore call another workflow. It's inportant that we gave it the same inputs that the `TEST-PIPELINE` workflow needs:
+
+```groovy
+TEST-PIPELINE(
+    samplesheet,
+    params.multiqc_config,
+    params.multiqc_logo,
+    params.multiqc_methods_description,
+    params.outdir,
+)
+```
+
+#### 4. Exposing workflow outputs with `emit:`
+
+`emit:` defines the public outputs of a named workflow. In this case, the multiqc report output of the main workflow is exposed by the pipeline:
+
+```groovy
+emit:
+    multiqc_report = TEST-PIPELINE.out.multiqc_report
+```
+
+#### 5. The entry workflow
+
+This is the **entry workflow**: the workflow that Nextflow executes when the pipeline is launched.
+
+Its role here is mainly orchestration rather than analysis.
+
+This is a common structure in nf-core pipelines.
+
+The initialisation subworkflow handles common tasks before the main analysis.
+
+```groovy
+PIPELINE_INITIALISATION(
+    params.version,
+    params.validate_params,
+    params.monochrome_logs,
+    args,
+    params.outdir,
+    params.input,
+    params.help,
+    params.help_full,
+    params.show_hidden
+)
+```
+
+It receives parameters related to:
+
+- pipeline version
+- parameter validation
+- log formatting
+- command-line arguments
+- output directory
+- input
+- help options
+
+One new item here is `args`. `args` contains the command-line arguments passed to Nextflow that are not represented by named pipeline parameters.
+
+The initialisation workflow produces a `samplesheet` that is passed directly to the main workflow:
+
+```groovy
+BUISCIII_TEST-PIPELINE(
+    PIPELINE_INITIALISATION.out.samplesheet
+)
+```
+
+#### 6. `PIPELINE_COMPLETION`
+
+After the main analysis:
+
+```groovy
+PIPELINE_COMPLETION(
+    params.monochrome_logs,
+)
+```
+
+The completion subworkflow performs common finalisation tasks.
+
+### 2. Main workflow
+
+We can see that inside the `workflow` folder we have the main nextflow script of our workflow, that is called in the previous script.
+
+#### 1. Imports: modules, subworkflows and plugins
+
+The `include` statements import reusable components instead of defining their processes locally.
+
+```groovy
+include { FASTQC } from '../modules/nf-core/fastqc/main'
+include { MULTIQC } from '../modules/nf-core/multiqc/main'
+```
+
+These are nf-core modules. `FASTQC` and `MULTIQC` can therefore be called from the workflow without redefining the processes.
+
+Other imports come from the pipeline's utils subworkflow that is generated automatically by the template.
+
+```groovy
+include { paramsSummaryMultiqc } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+```
+
+The script also imports from a nf-core plugin:
+
+```groovy
+include { paramsSummaryMap } from 'plugin/nf-schema'
+```
+
+`nf-schema` is an official Nextflow plugin used by nf-core for parameter validation and schema-related functionality. Plugins extend Nextflow with additional functionality that is not part of the core language.
+
+#### 2. Workflow inputs:
+
+The workflow receives several input channels/values:
+
+```groovy
+workflow TEST-PIPELINE {
+
+    take:
+    ch_samplesheet
+    multiqc_config
+    multiqc_logo
+    multiqc_methods_description
+    outdir
+```
+`take:` defines the inputs of a named workflow. This allows the workflow to be called from another workflow and makes its interface explicit. In this specific case it takes the channel for the samplesheet, some configuration for multiqc and the path to the outputdirectory.
+
+This was invoked like this in the previous script:
+
+```groovy
+TEST-PIPELINE(
+    samplesheet,
+    params.multiqc_config,
+    params.multiqc_logo,
+    params.multiqc_methods_description,
+    params.outdir,
+)
+```
+
+#### 3. Create empty channels
+
+`channel.empty()` creates an empty channel that can later be populated by mixing other channels into it.
+
+```groovy
+def ch_versions = channel.empty()
+def ch_multiqc_files = channel.empty()
+```
+This is useful when the final set of inputs is assembled progressively.
+
+#### 4. Running modules
+
+FastQC is called with the samplesheet channel:
+
+```groovy
+FASTQC(ch_samplesheet)
+```
+
+The output is then added to the channel used by MultiQC:
+
+```groovy
+ch_multiqc_files = ch_multiqc_files.mix(
+    FASTQC.out.zip.map { _meta, file -> file }
+)
+```
+
+`mix()` combines emissions from multiple channels into one channel.
+
+Here, `FASTQC.out.zip` is the output of the [`fastqc` module](./bu-isciii-test-pipeline/modules/nf-core/fastqc/main.nf), and contains metadata (meta) together with the generated ZIP file. The `map` operator extracts only the file because MultiQC needs the files themselves.
+
+##### meta
+
+In nf-core pipelines, sample-level metadata is usually carried alongside the input data as a tuple:
+
+```groovy
+[meta, reads]
+```
+
+For example:
+
+```groovy
+[
+    [id: 'sample1'],
+    'sample1.fastq.gz'
+]
+```
+
+The `meta` object contains information that identifies and describes the sample, such as its `id` or wether the reads are paire-end or not, and can be extended with additional metadata when needed.
+
+The `meta` object is created when the input samplesheet is parsed during [`PIPELINE_INITIALISATION`](./bu-isciii-test-pipeline/subworkflows/local/utils_nfcore_test-pipeline_pipeline/main.nf). 
+
+Here the input samplesheet is parsed here:
+
+```groovy
+channel
+    .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
+```
+
+The `samplesheetToList()` function comes from the `nf-schema` plugin:
+
+```groovy
+include { samplesheetToList } from 'plugin/nf-schema'
+```
+
+This function parses the samplesheet and returns records that are then unpacked in the following `map`:
+
+```groovy
+.map {
+    meta, fastq_1, fastq_2 ->
+```
+
+So this line is important:
+
+```groovy
+meta, fastq_1, fastq_2 ->
+```
+
+It means: Take each record returned by `samplesheetToList()` and assign its first element to the variable `meta`, its second element to `fastq_1`, and its third element to `fastq_2`.
+
+Afterwards, the pipeline then adds information about whether the sample is single-end or paired-end.
+
+For single-end data:
+
+```groovy
+return [
+    meta.id,
+    meta + [ single_end:true ],
+    [ fastq_1 ]
+]
+```
+
+For paired-end data:
+
+```groovy
+return [
+    meta.id,
+    meta + [ single_end:false ],
+    [ fastq_1, fastq_2 ]
+]
+```
+
+Notice this:
+
+```groovy
+meta + [ single_end:true ]
+```
+
+This creates a new metadata map based on `meta`, adding the field:
+
+```groovy
+single_end: true
+```
+
+For example, conceptually:
+
+```groovy
+meta = [id: 'sample1']
+```
+
+becomes:
+
+```groovy
+[id: 'sample1', single_end: true]
+```
+
+So the pipeline is **enriching** the metadata.
+
+It is then passed through the pipeline together with the data when `FASTQC` is called:
+
+```groovy
+FASTQC(ch_samplesheet)
+```
+
+the module receives the `meta` information together with the input files. The module keeps this metadata associated with its outputs.
+
+Therefore, the `FASTQC` output can contain a tuple such as:
+
+```groovy
+[meta, fastqc_zip]
+```
+
+This is why we can write:
+
+```groovy
+FASTQC.out.zip.map { _meta, file -> file }
+```
+
+Here, `_meta` receives the metadata and `file` receives the FastQC ZIP file. We use `_meta` with a leading underscore because we do not need the metadata at this point.
+
+#### 5. Topic channels
+
+A particularly new concept here is:
+
+```groovy
+channel.topic("versions")
+```
+
+A topic channel is a channel-based mechanism for publishing and consuming data through a named topic.
+
+Processes can publish values to a topic, and other parts of the workflow can subscribe to that topic without requiring a direct channel connection.
+
+Here, the `"versions"` topic is used to collect software-version information from modules.
+
+The topic is then split with `branch`:
+
+```groovy
+.branch { entry ->
+    versions_file: entry instanceof Path
+    versions_tuple: true
+}
+```
+
+This creates two branches:
+
+- `versions_file`: entries that are files (`Path`)
+- `versions_tuple`: the remaining version tuples
+
+##### `branch()`
+
+`branch` routes channel emissions into different named output channels according to conditions.
+
+The version tuples are transformed:
+
+```groovy
+.map { process, tool, version ->
+    [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+}
+```
+
+They are then grouped by process with `groupTuple()` and formatted into a human-readable string.
+
+This produces a summary of software versions grouped by process.
+
+#### 6. Collecting version information
+
+The script combines the traditional `ch_versions` channel with the versions obtained through the topic, but this is for older versions of nextflow, so we could remove everything related with `ch_versions` or keep it as it is an empty channel.
+
+```groovy
+softwareVersionsToYAML(
+    ch_versions.mix(topic_versions.versions_file)
+)
+```
+
+The resulting information is written to a YAML file with `collectFile()`:
+
+```groovy
+.collectFile(
+    storeDir: "${outdir}/pipeline_info",
+    name: 'test-pipeline_software_mqc_versions.yml',
+    sort: true,
+    newLine: true
+)
+```
+
+`collectFile()` collects channel emissions and writes them into a file. Unlike `collect()`, which creates a single list emission, `collectFile()` creates a file from the channel contents.
+
+#### 7. Building the MultiQC input
+
+The script progressively adds different files to `ch_multiqc_files`:
+
+- FastQC results
+- software versions
+- workflow parameter summary
+- methods description
+
+For example:
+
+```groovy
+ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
+```
+
+##### Workflow parameter summary
+
+The plugin is used again:
+
+```groovy
+def ch_summary_params = paramsSummaryMap(
+    workflow,
+    parameters_schema: "nextflow_schema.json"
+)
+```
+
+This generates a representation of the workflow parameters based on the pipeline schema.
+
+The result is transformed into a MultiQC-compatible summary:
+
+```groovy
+paramsSummaryMultiqc(ch_summary_params)
+```
+
+The pipeline schema is not only used for validating parameters. It can also be used to generate metadata and documentation about the workflow execution.
+
+##### Conditional multiqc_config
+
+This pattern:
+
+```groovy
+multiqc_config
+    ? file(multiqc_config, checkIfExists: true)
+    : file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
+```
+
+uses Groovy's ternary operator.
+
+It means:
+
+- if the user supplied `multiqc_config`, use it;
+- otherwise, use the default configuration from `assets/`.
+
+The same pattern is used for the MultiQC logo.
+
+##### `channel.value()`
+
+`channel.value()` creates a value channel containing one value. This is useful when a function returns a single object that needs to be passed through the channel-based workflow.
+
+```groovy
+def ch_methods_description =
+    channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+```
+
+##### `flatten()` and `collect()`
+
+Before calling MultiQC:
+
+```groovy
+ch_multiqc_files.flatten().collect()
+```
+
+#### 8. Calling MultiQC
+
+Finally, everything is assembled into the input structure expected by the MultiQC module:
+
+```groovy
+MULTIQC(
+    ch_multiqc_files.flatten().collect().map { files ->
+        [
+            [id: 'test-pipeline'],
+            files,
+            multiqc_config ? file(...) : file(...),
+            multiqc_logo ? file(...) : [],
+            [],
+            [],
+        ]
+    }
+)
+```
+
+The important idea is that the workflow adapts its internal channels to the interface expected by the reusable `MULTIQC` module.
+
+#### 9. `emit:` from a workflow
+
+The workflow exposes selected outputs:
+
+```groovy
+emit:
+    multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList()
+    versions = ch_versions
+```
+
+### 3. Modules
+
+#### 1. FASTQC
+
+This module defines a Nextflow `process` called `FASTQC`. It runs FastQC on one or more FASTQ files while carrying sample metadata (`meta`) together with the input data.
+
+##### 1. `tag`
+
+```groovy
+tag "${meta.id}"
+```
+
+The `tag` defines the label displayed by Nextflow for each task.
+
+It uses the sample identifier from the metadata:
+
+```groovy
+${meta.id}
+```
+
+This makes it easier to identify which sample each task corresponds to.
+
+The `meta` object comes from the input tuple:
+
+```groovy
+tuple val(meta), path(reads, stageAs: '?/*')
+```
+
+##### 2. `label`
+
+```groovy
+label 'process_low'
+```
+
+The label assigns the process to a named resource profile.
+
+The label itself does not specify CPU or memory. Those values are normally defined in the pipeline [configuration](./bu-isciii-test-pipeline/conf/base.config) that we will see later.
+
+In this case:
+
+```groovy
+    withLabel:process_low {
+        cpus   = { 2     * task.attempt }
+        memory = { 12.GB * task.attempt }
+        time   = { 4.h   * task.attempt }
+    }
+```
+
+This allows the same module to use different resources depending on the execution environment.
+
+##### 3. Software environment
+
+###### Conda
+
+```groovy
+conda "${moduleDir}/environment.yml"
+```
+
+This tells Nextflow to use the Conda environment defined in [`environment.yml`](./bu-isciii-test-pipeline/modules/nf-core/fastqc/environment.yml).
+
+###### Container
+
+The module also defines a container image. The conditional expression selects the appropriate image depending on the container engine and configuration. The important concept is that FastQC is executed inside a reproducible software environment rather than depending on a host installation.
+
+##### 5. Input
+
+```groovy
+input:
+tuple val(meta), path(reads, stageAs: '?/*')
+```
+
+The process expects a tuple containing:
+
+```text
+meta + reads
+```
+
+`val(meta)` means that `meta` is passed as a value.
+
+For example:
+
+```groovy
+[id: 'sample1', single_end: true]
+```
+
+`path(reads)` means that `reads` represents one or more files.
+
+Nextflow stages these files inside the task work directory.
+
+##### 6. Outputs
+
+The process defines three outputs:
+
+1. The output contains the metadata together with the HTML report. The output channel is named `html` and can be accessed as: `FASTQC.out.html`
+
+```groovy
+tuple val(meta), path("*.html"), emit: html
+```
+
+2. The ZIP output that contains metadata and the ZIP file that can be accesses as `FASTQC.out.zip`
+
+```groovy
+tuple val(meta), path("*.zip"), emit: zip
+```
+
+Here `_meta` receives the metadata and `file` receives the ZIP file.
+
+3. Software version output
+
+This reports the FastQC version.
+
+```groovy
+tuple val("${task.process}"),
+      val('fastqc'),
+      eval('fastqc --version | sed "/FastQC v/!d; s/.*v/"'),
+      emit: versions_fastqc,
+      topic: versions
+```
+
+The version is obtained by executing in the `script`:
+
+```bash
+fastqc --version
+```
+
+and processing the output with `sed`.
+
+The output is emitted as `versions_fastqc` and also published to the `versions` topic so that the pipeline can collect software versions from different processes.
+
+##### 7. Conditional execution
+
+```groovy
+when:
+task.ext.when == null || task.ext.when
+```
+
+The `when` block controls whether the process runs.
+
+The process runs when `task.ext.when` is not defined or evaluates to true in the [configuration file](./bu-isciii-test-pipeline/conf/modules.config).
+
+This allows the process to be disabled through configuration without modifying the module itself.
+
+##### 8. Additional arguments
+
+```groovy
+def args = task.ext.args ?: ''
+```
+
+This retrieves optional additional FastQC arguments from the [configuration file](./bu-isciii-test-pipeline/conf/modules.config).
+
+The operator `?:` means: Use `task.ext.args` if it has a value; otherwise use an empty string.
+
+The output prefix comes from `task.ext.prefix` if configured. Otherwise the sample ID is used.
+
+```groovy
+def prefix = task.ext.prefix ?: "${meta.id}"
+```
+
+##### 9. Renaming the input files
+
+The module creates pairs containing the original filename and the desired filename:
+
+```groovy
+def old_new_pairs = reads instanceof Path || reads.size() == 1
+    ? [[reads, "${prefix}.${reads.extension}"]]
+    : reads.withIndex().collect {
+        entry, index ->
+        [entry, "${prefix}_${index + 1}.${entry.extension}"]
+    }
+```
+
+There are two cases.
+
+1. One input file: The process creates one old/new pair:
+
+```text
+original → prefix.extension
+```
+
+2. Multiple input files: It uses:
+
+```groovy
+reads.withIndex()
+```
+
+and generates names such as:
+
+```text
+prefix_1.extension
+prefix_2.extension
+```
+
+This gives the files predictable names derived from the sample prefix.
+
+###### Building the rename command
+
+This converts the list of old/new filename pairs into a string that can be passed to the shell loop.
+
+```groovy
+def rename_to = old_new_pairs*.join(' ').join(' ')
+```
+
+The result is conceptually:
+
+```text
+old1 new1 old2 new2
+```
+
+The shell then reads these values as pairs.
+
+###### List of renamed files
+
+This extracts only the new filenames.
+
+```groovy
+def renamed_files = old_new_pairs.collect {
+    _old_name, new_name -> new_name
+}.join(' ')
+```
+
+For example:
+
+```text
+sample1_1.fastq.gz sample1_2.fastq.gz
+```
+
+These are the filenames passed to FastQC.
+
+##### 10. Calculating FastQC memory
+
+The module calculates the memory value that should be passed to FastQC.
+
+```groovy
+def memory_in_mb = task.memory
+    ? (task.memory.toUnit('MB') / task.cpus).intValue()
+    : null
+```
+
+For example, if Nextflow allocates:
+
+```text
+task.memory = 8 GB
+task.cpus = 2
+```
+
+the calculation gives approximately:
+
+```text
+8 GB / 2 = 4 GB
+```
+
+which is then converted to MB.
+
+The reason for dividing by `task.cpus` is explained by the module comment: FastQC's total RAM usage is related to the number of threads multiplied by the FastQC `--memory` value.
+
+
+The module limits the FastQC memory value to 100 - 10000 MB:
+
+```groovy
+def fastqc_memory =
+    memory_in_mb > 10000
+        ? 10000
+        : (memory_in_mb < 100 ? 100 : memory_in_mb)
+```
+
+means:
+
+```text
+> 10000 MB → use 10000 MB
+< 100 MB   → use 100 MB
+otherwise  → use calculated value
+```
+
+The command-line argument is then generated:
+
+```groovy
+def fastqc_memory_arg =
+    fastqc_memory
+        ? "--memory ${fastqc_memory}"
+        : ''
+```
+
+So it becomes something like:
+
+```bash
+--memory 4000
+```
+
+##### 11. `script` block
+
+The `script` block executes two main operations.
+
+###### Creating symbolic links
+
+```bash
+printf "%s %s\n" ${rename_to} | while read old_name new_name; do
+    [ -f "${new_name}" ] || ln -s $old_name $new_name
+done
+```
+
+This creates symbolic links from the original staged filenames to the desired filenames. It checks whether the target already exists, if the file does not already exist it generates the simbolik links.
+
+###### Running FastQC
+
+The final command is:
+
+```bash
+fastqc \
+    ${args} \
+    --threads ${task.cpus} \
+    ${fastqc_memory_arg} \
+    ${renamed_files}
+```
+
+So the resulting command could look conceptually like:
+
+```bash
+fastqc \
+    --threads 4 \
+    --memory 2000 \
+    sample1.fastq.gz
+```
+
+##### 12. The `stub` block
+
+The `stub` block provides a lightweight replacement for the real process. Instead of running FastQC, it simply creates the expected output files. This is useful for testing the pipeline structure without running the actual analysis.
+
+### 4. nextflow.config
+
+In the main pipeline folder we have the initial configuration file called [`nextflow.config`](./bu-isciii-test-pipeline/nextflow.config). The `nextflow.config` file contains the configuration used to control how the pipeline is executed.
+
+It is mainly organised into the following sections:
+
+1. Pipeline parameters
+2. Output configuration
+3. Included configuration files
+4. Execution profiles
+5. Container registries and reference genomes
+6. Environment variables and shell configuration
+7. Execution reports
+8. Pipeline metadata
+9. Nextflow plugins and validation
+10. Module-specific configuration
+
+#### 1. Pipeline parameters
+
+The `params` block defines the DEFAULT valued for the different parameters that can be provided to the pipeline from the command line.
+
+```groovy
+params {
+    input = null
+    genome = null
+    outdir = null
+    ...
+}
+```
+
+For example, a parameter defined in this file can be provided when launching the pipeline:
+
+```bash
+nextflow run . --input samplesheet.csv
+```
+
+#### 2. Output configuration
+
+```groovy
+outputDir = params.outdir
+workflow.output.mode = params.publish_dir_mode
+```
+
+The output directory is taken from the `--outdir` parameter. Two dashes, so it's a pipeline param.
+
+The publication mode is controlled by:
+
+```groovy
+publish_dir_mode = 'copy'
+```
+
+#### 3. Included configuration files
+
+The configuration is split into several files using `includeConfig`.
+
+1. Base configuration: This loads general default configuration. This congiguration can overwitte configurations from this `nextflow.config` file.
+
+```groovy
+includeConfig 'conf/base.config'
+```
+
+2. iGenomes configuration: Depending on `igenomes_ignore`, the pipeline loads either the standard iGenomes configuration or the alternative ignored configuration.
+
+```groovy
+includeConfig !params.igenomes_ignore
+    ? 'conf/igenomes.config'
+    : 'conf/igenomes_ignored.config'
+```
+
+#### 4. Execution profiles
+
+The `profiles` block defines different execution environments.
+
+A profile is selected when running the pipeline:
+
+```bash
+nextflow run . -profile docker
+```
+
+The workflow itself does not need to change when switching between these environments.
+
+The main default profiles are:
+
+##### 4.1 Software environment profiles
+
+The profiles `conda`, `mamba`, `docker`, `singularity`, `apptainer`, `podman`, `shifter`, and `charliecloud` select the environment used to execute processes.
+
+For example:
+
+```groovy
+docker {
+    docker.enabled = true
+    conda.enabled = false
+    ...
+}
+```
+
+When running:
+
+```bash
+nextflow run . -profile docker
+```
+
+processes that specify containers can be executed inside Docker.
+
+##### 4.2 `debug` profile
+
+This profile is intended for debugging. It enables additional information such as task hashes and the execution hostname, and prevents cleanup of intermediate execution data. It also enables process-name validation warnings.
+
+```groovy
+debug {
+    dumpHashes = true
+    process.beforeScript = 'echo $HOSTNAME'
+    cleanup = false
+    nextflow.enable.configProcessNamesValidation = true
+}
+```
+
+##### 4.3 Test profiles
+
+These profiles load dedicated configurations for testing. They are useful for checking that the pipeline works without having to perform a full production analysis.
+
+```groovy
+test {
+    includeConfig 'conf/test.config'
+}
+
+test_full {
+    includeConfig 'conf/test_full.config'
+}
+```
+
+
+---
+
+#### 5. Container registries
+
+This determines where container images are retrieved from when those execution engines are enabled. For nf-core pipelines, this is particularly relevant because modules commonly specify container images.
+
+The configuration sets Quay as the default registry:
+
+```groovy
+apptainer.registry = 'quay.io'
+docker.registry = 'quay.io'
+podman.registry = 'quay.io'
+singularity.registry = 'quay.io'
+charliecloud.registry = 'quay.io'
+```
+
+#### 6. Environment variables
+
+The `env` block defines environment variables that are exported to processes. These settings help prevent local Python/R/Julia installations from interfering with the software environments provided by the pipeline. This is especially relevant when processes are executed inside containers.
+
+```groovy
+env {
+    PYTHONNOUSERSITE = 1
+    R_PROFILE_USER = "/.Rprofile"
+    R_ENVIRON_USER = "/.Renviron"
+    JULIA_DEPOT_PATH = "/usr/local/share/julia"
+}
+```
+
+#### 7. Bash configuration
+
+The shell used by processes is configured with:
+
+```groovy
+process.shell = [
+    "bash",
+    "-C",
+    "-e",
+    "-u",
+    "-o",
+    "pipefail"
+]
+```
+
+This makes process execution stricter.
+
+The important options are:
+
+- `-C` → prevents redirection from overwriting existing files.
+- `-e` → exits if a command returns a non-zero status.
+- `-u` → treats unset variables as errors.
+- `pipefail` → makes a pipeline fail if any command in the pipe fails.
+
+For example:
+
+```bash
+command1 | command2 | command3
+```
+
+will fail if `command1` or `command2` fails, rather than only considering the status of `command3`.
+
+This helps detect errors inside process scripts.
+
+#### 8. Execution reports
+
+Nextflow can automatically generate several reports.
+
+1. Timeline: Shows when processes started and finished.
+
+```groovy
+timeline {
+    enabled = true
+    file = "${params.outdir}/pipeline_info/execution_timeline_${params.trace_report_suffix}.html"
+}
+```
+
+2. Execution report: Provides a summary of the execution and resource usage.
+
+```groovy
+report {
+    enabled = true
+    file = "${params.outdir}/pipeline_info/execution_report_${params.trace_report_suffix}.html"
+}
+```
+
+3. Trace: Provides task-level execution information.
+
+```groovy
+trace {
+    enabled = true
+    file = "${params.outdir}/pipeline_info/execution_trace_${params.trace_report_suffix}.txt"
+}
+```
+
+5. DAG: Generates a graphical representation of the workflow dependencies.
+
+```groovy
+dag {
+    enabled = true
+    file = "${params.outdir}/pipeline_info/pipeline_dag_${params.trace_report_suffix}.html"
+}
+```
+
+#### 9. Pipeline manifest
+
+The `manifest` block contains metadata about the pipeline:
+
+```groovy
+manifest {
+    name            = 'bu-isciii/test-pipeline'
+    homePage        = 'https://github.com/bu-isciii/test-pipeline'
+    description     = """Test pipeline for workshop"""
+    mainScript      = 'main.nf'
+    defaultBranch   = 'master'
+    nextflowVersion = '!>=25.10.4'
+    version         = '1.0.0dev'
+}
+```
+
+#### 10. Nextflow plugins
+
+The configuration enables the `nf-schema` plugin:
+
+```groovy
+plugins {
+    id 'nf-schema@2.7.3'
+}
+```
+
+This plugin is important for this pipeline because it provides functionality for:
+
+- validating pipeline parameters;
+- defining input schemas;
+- parsing the samplesheet;
+- generating parameter/help information.
+
+This is connected to the `plugin/nf-schema` imports used elsewhere in the pipeline, for example:
+
+```groovy
+include { paramsSummaryMap } from 'plugin/nf-schema'
+include { samplesheetToList } from 'plugin/nf-schema'
+```
+
+#### 11. Validation
+
+This configures how parameter validation behaves. The validation configuration is:
+
+```groovy
+validation {
+    defaultIgnoreParams = ["genomes"]
+    monochromeLogs = params.monochrome_logs
+}
+```
+
+The `monochromeLogs` setting is connected to `params.monochrome_logs`, so the command-line parameter controls whether validation/help output uses coloured logs.
+
+#### 12. modules configuration
+
+This is particularly important for the pipeline's processes/modules. [`conf/modules.config`](./bu-isciii-test-pipeline/conf/modules.config) is where module-specific configuration can be defined. We will see it later.
+
+```groovy
+includeConfig 'conf/modules.config'
+```
+
+### 5. `conf/` folder
+
+The [`conf/`](./bu-isciii-test-pipeline/conf/) directory contains configuration files that control how the pipeline is executed, including process resources, containers, test settings, and reference databases.
+
+```bash
+conf/
+├── base.config
+├── containers_conda_lock_files_amd64.config
+├── containers_conda_lock_files_arm64.config
+├── containers_docker_amd64.config
+├── containers_docker_arm64.config
+├── containers_singularity_https_amd64.config
+├── containers_singularity_https_arm64.config
+├── containers_singularity_oras_amd64.config
+├── containers_singularity_oras_arm64.config
+├── igenomes.config
+├── igenomes_ignored.config
+├── modules.config
+├── test.config
+└── test_full.config
+```
+
+| File(s) | Purpose |
+|---|---|
+| `base.config` | Default process resources and execution settings |
+| `modules.config` | Module/process-specific configuration |
+| `test.config` | Configuration for lightweight tests |
+| `test_full.config` | Configuration for full tests |
+| `igenomes*.config` | iGenomes reference configuration |
+| `containers_*.config` | Container/Conda environment definitions for different platforms |
+| `*.lock_files.config` | Locked environment definitions for reproducibility |
+
+#### 1. `base.config`
+
+[`base.config`](./bu-isciii-test-pipeline/conf/base.config) defines general defaults for processes. It provides general resource requirements and error-handling behaviour, which can then be refined for specific groups of processes using labels.
+
+#### 2. `modules.config`
+
+[`modules.config`](./bu-isciii-test-pipeline/conf/modules.config) provides configuration specific to individual modules/processes, for example:
+
+```bash
+    withName: FASTQC {
+        ext.args = '--quiet'
+    }
+```
+
+It can also configure things such as:
+
+- publishDir
+- ext.args
+- ext.prefix
+- process-specific resources
+- other process directives
+
+#### 3. `<profile>.config`
+
+Finally we have profile's specific config files such as [`test.config`](./bu-isciii-test-pipeline/conf/test.config). The purpose is to provide a configuration sepcific to a purpose, like performing a quick pipeline test. In this case the purpose is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
+
+### 6. Executing the test profile
+
+Now we can move forward to a quick test run. We can execute:
+
+```bash
+nextflow run bu-isciii-test-pipeline/main.nf -test profile
+```
+
+
+
+### 7. Custom execution
+
+
+
+So, after all these configurations and params, summarizing the priority order is:
+
+For process configuration, there's a rule for priority:
+
+1. Process configuration settings (without a selector)
+2. Process directives in the process definition
+3. withLabel selectors matching any of the process labels
+4. withName selectors matching the process name
+5. withName selectors matching the process included alias
+6. withName selectors matching the process fully qualified nam
+
+![process_priority](./img/process_priority.png)
+
+For parameters:
+
+![params_priority](./img/params_priority.png)
+
+### 8. Installing additional modules
+
+### 9. Final run
+
