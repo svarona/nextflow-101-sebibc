@@ -12,21 +12,21 @@ All the scripts that will be used or created during the training are available i
 
 For this workshop we will need Nextflow >= 25.10.2 and any of Singularity, docker or conda.
 
-In the workshop we will be using **micromamba** for training purposes as it is quicker and easier to install.
+In the workshop we will be using **miniconda** for training purposes as it is quicker and easier to install.
 
-### Micromamba installation
+### Miniconda installation
 
-You can follow the official documentation [here](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)
+You can follow the official documentation [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html#install-linux-silent)
 
 ### nf-core tools installation
 
-We will be installing Nextflow and the nf-core tools through micromamba.
+We will be installing Nextflow and the nf-core tools through miniconda.
 
 You can follow the official installation documentation [here](https://nf-co.re/docs/nf-core-tools/cli/installation)
 
 ```
-micromamba create --name nf-core-env nf-core nextflow
-micromamba activate nf-core-env
+conda create --name nf-core-env nf-core nextflow
+conda activate nf-core-env
 nf-core --version
 nextflow -version
 ```
@@ -1899,19 +1899,6 @@ It can also configure things such as:
 
 Finally we have profile's specific config files such as [`test.config`](./bu-isciii-test-pipeline/conf/test.config). The purpose is to provide a configuration sepcific to a purpose, like performing a quick pipeline test. In this case the purpose is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
 
-### 6. Executing the test profile
-
-Now we can move forward to a quick test run. We can execute:
-
-```bash
-nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
-```
-
-
-
-### 7. Custom execution
-
-
 
 So, after all these configurations and params, summarizing the priority order is:
 
@@ -1930,7 +1917,135 @@ For parameters:
 
 ![params_priority](./img/params_priority.png)
 
-### 8. Installing additional modules
+### 6. Executing the test profile
 
-### 9. Final run
+Now we can move forward to a quick test run. We can execute:
 
+> Note: I need a local file because mi laptop doesn't have enough memory for the test to run.
+
+```bash
+nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
+```
+
+This will attempt to create the conda images unless you have them cachaed already.
+
+And it will run something like this:
+
+```bash
+
+ N E X T F L O W   ~  version 26.10.5
+
+Launching `bu-isciii-test-pipeline/main.nf` [silly_koch] revision: a59a048366
+
+Input/output options
+  input                     : https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_illumina_amplicon.csv
+  outdir                    : qc_results
+
+Reference genome options
+  genome                    : R64-1-1
+
+Institutional config options
+  config_profile_name       : Test profile
+  config_profile_description: Minimal test dataset to check pipeline function
+
+Generic options
+  trace_report_suffix       : 2026-11-06_18-08-38
+
+Core Nextflow options
+  runName                   : silly_koch
+  launchDir                 : /home/svarona/Repositories/nextflow-101-sebibc
+  workDir                   : /home/svarona/Repositories/nextflow-101-sebibc/work
+  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline
+  userName                  : svarona
+  profile                   : test,conda
+  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline/nextflow.config,/home/svarona/Repositories/nextflow-101-sebibc/local.config
+
+!! Only displaying parameters that differ from the pipeline defaults !!
+------------------------------------------------------
+executor >  local (4)
+[32/566bd0] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE2_PE)     | 3 of 3 ✔
+[f9/d3ee2f] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test-pipeline) | 1 of 1 ✔
+-[bu-isciii/test-pipeline] Pipeline completed successfully-
+
+Completed at: 06-Nov-2026 18:10:21
+Duration    : 1m 41s
+CPU hours   : (a few seconds)
+Succeeded   : 4
+```
+
+### 7. Installing additional modules
+
+We can install additional software using the nf-core tools
+
+```bash
+nf-core modules install
+```
+
+And then write the name of the module you want to add to the pipeline.
+
+A lot of new files will be updated.
+
+We need to add this process to our main workflow.
+
+### 8. Final run
+
+And finally we can execute all the Pre-processing pipeline BUT we are going to use our custom samples using this samplesheet:
+
+```bash
+sample,fastq_1,fastq_2
+SAMPLE1_PE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R2.fastq.gz
+SAMPLE2_PE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R1.fastq.gz,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R2.fastq.gz
+SAMPLE3_SE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz,
+```
+
+And once created we can run:
+
+```bash
+nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir preproqc_results -c local.config --input samplesheet.csv
+```
+
+Y veremos algo asi:
+
+```bash
+
+ N E X T F L O W   ~  version 26.10.5
+
+Launching `bu-isciii-test-pipeline/main.nf` [pensive_tuckerman] revision: a59a048366
+
+Input/output options
+  input                     : samplesheet.csv
+  outdir                    : preproqc_results
+
+Reference genome options
+  genome                    : R64-1-1
+
+Institutional config options
+  config_profile_name       : Test profile
+  config_profile_description: Minimal test dataset to check pipeline function
+
+Generic options
+  trace_report_suffix       : 2026-11-06_18-42-52
+
+Core Nextflow options
+  runName                   : pensive_tuckerman
+  launchDir                 : /home/svarona/Repositories/nextflow-101-sebibc
+  workDir                   : /home/svarona/Repositories/nextflow-101-sebibc/work
+  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline
+  userName                  : svarona
+  profile                   : test,conda
+  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline/nextflow.config, /home/svarona/Repositories/nextflow-101-sebibc/conda.config
+
+!! Only displaying parameters that differ from the pipeline defaults !!
+------------------------------------------------------
+executor >  local (7)
+[07/38ff2c] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE1_PE)     [100%] 3 of 3 ✔
+[0a/78c977] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTP (SAMPLE3_SE)      [100%] 3 of 3 ✔
+[d0/1929f6] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test-pipeline) [100%] 1 of 1 ✔
+-[bu-isciii/test-pipeline] Pipeline completed successfully-
+Completed at: 06-Nov-2026 18:44:21
+Duration    : 1m 28s
+CPU hours   : 0.1
+Succeeded   : 7
+```
+
+Se ha ejecutado el FastP para las 3 muestras.
