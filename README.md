@@ -726,7 +726,7 @@ This script is the **entry point and orchestrator** of an nf-core pipeline, it m
 #### 1. Imports
 
 ```groovy
-include { TEST-PIPELINE }           from './workflows/test-pipeline'
+include { TEST_PIPELINE }           from './workflows/test-pipeline'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline' 
 include { PIPELINE_COMPLETION }     from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
 include { getGenomeAttribute }      from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
@@ -734,7 +734,7 @@ include { getGenomeAttribute }      from './subworkflows/local/utils_nfcore_test
 
 Three types of reusable components are imported:
 
-- `TEST-PIPELINE`: the workflow containing the actual analysis logic.
+- `TEST_PIPELINE`: the workflow containing the actual analysis logic.
 - `PIPELINE_INITIALISATION` and `PIPELINE_COMPLETION`: nf-core subworkflows that handle common tasks before and after the analysis.
 - `getGenomeAttribute`: a reusable function.
 
@@ -755,7 +755,7 @@ This workflow acts as an intermediate orchestration layer.
 It receives the samplesheet and calls the actual analysis workflow:
 
 ```groovy
-workflow BUISCIII_TEST-PIPELINE {
+workflow BUISCIII_TEST_PIPELINE {
 
     take:
     samplesheet
@@ -763,10 +763,10 @@ workflow BUISCIII_TEST-PIPELINE {
     main:
 ```
 
-Then it calls to the nextflow script inside `workflows` folder that we will see later. A workflow can therefore call another workflow. It's inportant that we gave it the same inputs that the `TEST-PIPELINE` workflow needs:
+Then it calls to the nextflow script inside `workflows` folder that we will see later. A workflow can therefore call another workflow. It's inportant that we gave it the same inputs that the `TEST_PIPELINE` workflow needs:
 
 ```groovy
-TEST-PIPELINE(
+TEST_PIPELINE(
     samplesheet,
     params.multiqc_config,
     params.multiqc_logo,
@@ -781,7 +781,7 @@ TEST-PIPELINE(
 
 ```groovy
 emit:
-    multiqc_report = TEST-PIPELINE.out.multiqc_report
+    multiqc_report = TEST_PIPELINE.out.multiqc_report
 ```
 
 #### 5. The entry workflow
@@ -823,7 +823,7 @@ One new item here is `args`. `args` contains the command-line arguments passed t
 The initialisation workflow produces a `samplesheet` that is passed directly to the main workflow:
 
 ```groovy
-BUISCIII_TEST-PIPELINE(
+BUISCIII_TEST_PIPELINE(
     PIPELINE_INITIALISATION.out.samplesheet
 )
 ```
@@ -875,7 +875,7 @@ include { paramsSummaryMap } from 'plugin/nf-schema'
 The workflow receives several input channels/values:
 
 ```groovy
-workflow TEST-PIPELINE {
+workflow TEST_PIPELINE {
 
     take:
     ch_samplesheet
@@ -889,7 +889,7 @@ workflow TEST-PIPELINE {
 This was invoked like this in the previous script:
 
 ```groovy
-TEST-PIPELINE(
+TEST_PIPELINE(
     samplesheet,
     params.multiqc_config,
     params.multiqc_logo,
@@ -1904,7 +1904,7 @@ Finally we have profile's specific config files such as [`test.config`](./bu-isc
 Now we can move forward to a quick test run. We can execute:
 
 ```bash
-nextflow run bu-isciii-test-pipeline/main.nf -test profile
+nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
 ```
 
 

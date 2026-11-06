@@ -13,7 +13,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { TEST-PIPELINE           } from './workflows/test-pipeline'
+include { TEST_PIPELINE           } from './workflows/test-pipeline'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
 
@@ -26,7 +26,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_test
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow BUISCIII_TEST-PIPELINE {
+workflow BUISCIII_TEST_PIPELINE {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -36,7 +36,7 @@ workflow BUISCIII_TEST-PIPELINE {
     //
     // WORKFLOW: Run pipeline
     //
-    TEST-PIPELINE (
+    TEST_PIPELINE (
         samplesheet,
         params.multiqc_config,
         params.multiqc_logo,
@@ -44,7 +44,7 @@ workflow BUISCIII_TEST-PIPELINE {
         params.outdir,
     )
     emit:
-    multiqc_report = TEST-PIPELINE.out.multiqc_report // channel: /path/to/multiqc_report.html
+    multiqc_report = TEST_PIPELINE.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,7 +73,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    BUISCIII_TEST-PIPELINE (
+    BUISCIII_TEST_PIPELINE (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //
