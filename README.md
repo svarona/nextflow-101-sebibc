@@ -2048,4 +2048,4 @@ CPU hours   : 0.1
 Succeeded   : 7
 ```
 
-Se ha ejecutado el FastP para las 3 muestras.
+We can see the fastp was executed for the three samples.
