@@ -1,3 +1,4 @@
 .nextflow*
 work
 qc_results/
+preproqc_results/
