@@ -102,17 +102,18 @@ This example introduces the fundamental concepts of Nextflow by building a simpl
 
 The workflow demonstrates how to:
 
-1. Receive input parameters and create channels.
-2. Filter and transform channel elements using operators.
+1. Receive an input file through a workflow parameter and create a channel from its contents.
+2. Filter channel elements using operators.
 3. Define processes to execute individual computational tasks.
 4. Connect processes through channels.
 5. Collect channel elements into a single list.
-6. Organise and publish workflow outputs.
+6. Pass a collected list to a process that executes once for the complete group.
+7. Publish workflow outputs into organised directories.
 
 The example uses two processes:
 
-- `SAVE_GREETINGS`: generates one text file per greeting.
-- `COLLECT_GREETINGS`: collects all greetings into a single text file.
+- `SAY_HELLO`: generates one text file per name.
+- `ALL_GREETINGS`: generates a single text file containing a greeting for all names.
 
 ### Entry workflow
 
@@ -120,50 +121,43 @@ The entry workflow is the main execution point of the pipeline. It creates the i
 
 #### Creating the input channel
 
-The workflow receives a comma-separated list of names through the `params.input` parameter.
+The workflow receives the path to a text file through the `params.input` parameter.
 
 ```groovy
+workflow {
+    main:
     // Create a channel from the input parameter
-    println "Input string: ${params.input}"
-    input_ch = channel.of(params.input).view { "Input string: $it" }
-    println "Input string channel: ${input_ch}"
-
-    // Split the comma-separated input and create a channel
-
-    names_ch = channel.fromList(
-        params.input.split(',').collect { it.trim() }
-    )
-    names_ch.view { "Input name: $it" }
-)
+    println "Input parameter: ${params.input}"
+    input_ch = channel
+        .fromPath(params.input)
+        .splitText()
+        .map { it.trim() }
+    input_ch.view { input -> "Input channel: ${input}" }
 ```
 
 This expression uses several Groovy and Nextflow features:
 
 - `params.input`: accesses the workflow input parameter.
-- `println`: Displays values, the input params or the channel in this case, directly to the console.
-- `.view`: This prints the channels' content directly to the terminal, allowing us to verify its content.
-- `split(',')`: splits the input string into individual names.
-- `collect { it.trim() }`: removes leading and trailing whitespace from each name using the Groovy `collect()` method.
-- `channel.fromList()`: creates a channel emitting each element of the supplied list as an individual emission.
+- `println`: displays the input parameter directly in the terminal.
+- `channel.fromPath()`: creates a channel from a file path.
+- `splitText()`: reads the text file and emits its contents line by line.
+- `map { it.trim() }`: removes leading and trailing whitespace from each emitted line.
+- `view`: prints the channel contents to the terminal without consuming them.
 
-For example, the input:
-
-```bash
---input 'Alice, Bob, Charlie'
-```
-
-produces a channel with three individual emissions:
+For example, if the input file contains:
 
 ```text
 Alice
+C
 Bob
+A
 Charlie
 ```
 
 #### Invoking the workflow: CREATE_GREETINGS
 
 ```groovy
-CREATE_GREETINGS(names_ch)
+CREATE_GREETINGS(input_ch)
 ```
 
 The input channel is passed to `CREATE_GREETINGS`, which performs the filtering, transformation, and process execution steps.
@@ -176,69 +170,46 @@ The named workflow `CREATE_GREETINGS` receives a channel containing individual n
 
 The `take:` section declares the inputs required by the workflow.
 
-In this example, the workflow receives `names`, a channel containing individual names.
+In this example, the workflow receives `name`, a channel containing individual names.
 
 ##### Filtering channel elements: `filter`
 
 The `filter` operator selects the elements that satisfy a given condition.
 
 ```groovy
-filtered_names = names
-    .filter { name -> name.size() > 1 }
+    filtered_names.collect().view { names -> "Collected names: ${names}" }
 ```
 
 In this example, names containing only one character are removed from the channel.
-
-##### Transforming channel elements: `map`
-
-The `map` operator transforms each channel element into a new value.
-
-```groovy
-greetings = filtered_names
-    .map { name -> "Hello ${name}!" }
-```
-
-Each remaining name is converted into a greeting message.
-
-For example:
-
-| Input | Output |
-|---|---|
-| Alice | Hello Alice! |
-| Bob | Hello Bob! |
-| Charlie | Hello Charlie! |
-
-##### Inspecting channel contents: `view`
-
-The `view` operator prints channel elements to the console.
-
-```groovy
-greetings.view { "Greetings: $it" }
-```
-
-This is particularly useful for debugging workflows and checking the values flowing through channels.
-
-The `view` operator does not modify or consume the channel, so its elements remain available to downstream operations.
 
 ##### Collecting channel elements: `collect`
 
 The Nextflow `collect` operator gathers all elements emitted by a channel into a single list.
 
 ```groovy
-all_greetings = greetings.collect()
-all_greetings.view { "All greetings: $it" }
+filtered_names.collect()
 ```
 
 This changes the structure of the data flowing downstream:
 
-- Before `collect`: individual greeting strings are emitted by the channel.
-- After `collect`: a single list containing all greeting strings is emitted.
+- Before `collect`: individual names strings are emitted by the channel.
+- After `collect`: a single list containing all names strings is emitted.
 
-The resulting list is passed to `COLLECT_GREETINGS`.
+The resulting list is passed to `ALL_GREETINGS`.
 
 **Key concept:** `collect` changes the data structure received downstream, from individual channel elements to a single collection.
 
-**Note:** In the input channel creation expression, `collect { it.trim() }` is a Groovy list method that transforms each list element. It is different from the Nextflow channel operator `collect()`, which gathers all channel emissions into a single list.
+##### Inspecting channel contents: `view`
+
+The `view` operator prints channel elements to the console.
+
+```groovy
+    filtered_names.collect().view { names -> "Collected names: ${names}" }
+```
+
+This is particularly useful for debugging workflows and checking the values flowing through channels.
+
+The `view` operator does not modify the channel, so its elements remain available to downstream operations.
 
 ##### Executing processes
 
@@ -246,54 +217,51 @@ In Nextflow, a **process** defines a computational task. It specifies the inputs
 
 ###### SAVE_GREETINGS
 
-The `SAVE_GREETINGS` process is invoked with the `greetings` channel:
+The `SAY_HELLO` process is invoked with the `filtered_names` channel:
 
 ```groovy
-SAVE_GREETINGS(greetings)
+SAY_HELLO(greetings)
 ```
 
-Each channel element triggers an independent process execution. Therefore, if the channel contains three greetings, Nextflow launches three tasks. This process receives a single greeting as input and writes it into an individual text file.
+Each channel element triggers an independent process execution. Therefore, if the channel contains three names, Nextflow launches three tasks. This process receives a single name as input and writes it into an individual text file.
 
 **Input:**
-- `greeting`: a string containing a greeting message.
+- `name`: a string containing a name.
 
 **Output:**
 - A text file named after the recipient.
 
-For example, the input `Hello Alice!` generates the file `Alice.txt`, containing:
+For example, the input `Alice` generates the file `Alice_output.txt`, containing:
 
 ```text
 Hello Alice!
 ```
 
-The process uses a `val` input because the greeting is a value rather than a file. The `path` output declaration specifies the files generated by the task. The `*.txt` pattern allows Nextflow to capture the generated text file.
+The process uses a `val` input because the name is a value string. The `path` output declaration specifies the files generated by the task. The `*.txt` pattern allows Nextflow to capture the generated text file.
 
-The `emit` option assigns the name `result` to this process output, making it accessible through `SAVE_GREETINGS.out.result`.
+The `emit` option assigns the name `results` to this process output, making it accessible through `SAY_HELLO.out.results`.
 
-###### COLLECT_GREETINGS
+###### ALL_GREETINGS
 
-Unlike `SAVE_GREETINGS`, this process receives the complete list containing all the greeting messages as a single input value, and also takes the `--batch` param, and writes them into a single text file with the batch. Therefore, it executes only once, regardless of the number of greetings in the list.
+Unlike `SAY_HELLO`, this process receives the complete list containing all the names as a single input value and writes them into a single text file. Therefore, it executes only once, regardless of the number of names in the list.
 
 ```groovy
-COLLECT_GREETINGS(all_greetings)
+    ALL_GREETINGS(filtered_names.collect())
 ```
 
 **Input:**
-- `greetings`: a list of strings containing all generated greetings.
-- `batch`: CLI param with a string
+- `names`: a list of strings containing all names.
 
 **Output:**
-- `all_greetings.txt`: a file containing all greetings, one per line.
+- `all_greetings.txt`: a file containing all greetings in one line.
 
 For example:
 
 ```text
-Hello Alice!
-Hello Bob!
-Hello Charlie!
+Hello Alice, Bob, Charlie!
 ```
 
-The process uses `greetings.join('\n')` to concatenate all greetings into a single string separated by newline characters. The `printf` command writes this string into `{batch}_all_greetings.txt`, adding a newline after each greeting.
+The process uses `${names.join(', ')}` to concatenate all greetings into a single string separated by comma characters.
 
 ##### Workflow outputs: `emit:`
 
@@ -301,8 +269,8 @@ The `emit:` section exposes the outputs generated by the named workflow.
 
 ```groovy
 emit:
-individual_files = SAVE_GREETINGS.out.result
-collected_file = COLLECT_GREETINGS.out.result
+greeting_files = SAY_HELLO.out.results
+group_greetings = ALL_GREETINGS.out.group_results
 ```
 
 The outputs are assigned descriptive names so they can be accessed by the calling workflow.
@@ -313,14 +281,14 @@ The `publish:` section selects the outputs from the entry workflow that should b
 
 ```groovy
 publish:
-greeting_files = CREATE_GREETINGS.out.individual_files
-all_greetings_file = CREATE_GREETINGS.out.collected_file
+greeting_files = CREATE_GREETINGS.out.greeting_files
+group_file = CREATE_GREETINGS.out.group_greetings
 ```
 
-The two outputs are given descriptive names:
+The two outputs are:
 
 - `greeting_files`: individual greeting files.
-- `all_greetings_file`: the file containing all greetings.
+- `group_file`: the file containing all greetings.
 
 ### Workflow outputs
 
@@ -329,12 +297,11 @@ The top-level `output {}` block configures how the published results are organis
 ```groovy
 output {
     greeting_files {
-        path 'individual_greetings'
+        path 'greeting_files'
         mode 'copy'
     }
-
-    all_greetings_file {
-        path 'all_greetings'
+    group_file {
+        path 'group_greetings'
         mode 'copy'
     }
 }
@@ -348,11 +315,11 @@ The resulting directory structure will be:
 
 ```text
 results/
-├── individual_greetings/
-│   ├── Alice.txt
-│   ├── Bob.txt
-│   └── Charlie.txt
-└── all_greetings/
+├── greeting_files
+│   ├── Alice_output.txt
+│   ├── Bob_output.txt
+│   └── Charlie_output.txt
+└── group_greetings
     └── all_greetings.txt
 ```
 
@@ -373,18 +340,13 @@ nextflow run scripts/hello-greeetings.nf
 And we will see something like this:
 
 ```bash
-Nextflow 26.10.5 is available - Please consider updating your version to it
+ N E X T F L O W   ~  version 26.10.5
 
- N E X T F L O W   ~  version 26.10.4
-
-Launching `scripts/hello-greeetings.nf` [gigantic_liskov] revision: 64301b6531
+Launching `scripts/hello-greeetings.nf` [jolly_ardinghelli] revision: 88b8cd4c7d
 
 WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
-Input string: null
-Input string channel: DataflowBroadcast around DataflowStream[?]
-ERROR ~ Cannot invoke method split() on null object
-
- -- Check script 'scripts/hello-greeetings.nf' at line: 129 or see '.nextflow.log' file for more details
+Input parameter: null
+Missing `fromPath` parameter -- Check script 'scripts/hello-greeetings.nf' at line: 52 or see '.nextflow.log' file for more details
 ```
 
 If we don't specify any input, as there's no default input in the code (we could have add it, but we didn't in this example), the pipeline crashes.
@@ -394,76 +356,48 @@ If we don't specify any input, as there's no default input in the code (we could
 The script is stored in the `scripts/hello-greeetings.nf` folder, so it is executed as follows:
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "first"
+nextflow run scripts/hello-greeetings.nf --input  names.txt
 ```
 
 We will see something like this:
 
 ```bash
-Nextflow 26.10.5 is available - Please consider updating your version to it
+ N E X T F L O W   ~  version 26.10.5
 
- N E X T F L O W   ~  version 26.10.4
+Launching `scripts/hello-greeetings.nf` [big_swartz] revision: 88b8cd4c7d
 
-Launching `scripts/hello-greeetings.nf` [ridiculous_euclid] revision: 64301b6531
-
-Input string: Alice,C,Bob,A,Charlie
-Input string channel: DataflowBroadcast around DataflowStream[?]
-[-        ] CREATE_GREETINGS:SAVE_GREETINGS    -
-[-        ] CREATE_GREETINGS:COLLECT_GREETINGS -
-Input string: Alice,C,Bob,A,Charlie
+Input parameter: names.txt
 executor >  local (4)
-[61/41a121] CREATE_GREETINGS:SAVE_GREETINGS (1) [100%] 3 of 3 ✔
-[e9/58164c] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
-Input string: Alice,C,Bob,A,Charlie
-executor >  local (4)
-[61/41a121] CREATE_GREETINGS:SAVE_GREETINGS (1) [100%] 3 of 3 ✔
-[e9/58164c] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
-Input string: Alice,C,Bob,A,Charlie
-Input name: Alice
-Input name: C
-Input name: Bob
-Input name: A
-Input name: Charlie
-Greetings: Hello Alice!
-Greetings: Hello Bob!
-Greetings: Hello Charlie!
-All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
+[ac/976994] CREATE_GREETINGS:SAY_HELLO (2) [100%] 3 of 3 ✔
+[36/f7a751] CREATE_GREETINGS:ALL_GREETINGS [100%] 1 of 1 ✔
+Input channel: Alice
+Input channel: C
+Input channel: Bob
+Input channel: A
+Input channel: Charlie
+Collected names: [Alice, Bob, Charlie]
 
 Outputs:
 
   /home/svarona/Repositories/nextflow-101-sebibc/results
 
   greeting_files:
-    - individual_greetings/Bob.txt
-    - individual_greetings/Alice.txt
-    - individual_greetings/Charlie.txt
+    - greeting_files/Bob_output.txt
+    - greeting_files/Charlie_output.txt
+    - greeting_files/Alice_output.txt
 
-  all_greetings_file: all_greetings/first_all_greetings.txt
+  group_file: group_greetings/all_greetings.txt
 ```
 
 We can see that the results were saved into the `results/` folder:
 
-```bash
-results/
-├── all_greetings
-│   └── first_all_greetings.txt
-└── individual_greetings
-    ├── Alice.txt
-    ├── Bob.txt
-    └── Charlie.txt
-
-3 directories, 4 files
-```
-
 We can read the content of the different files:
 
 ```bash
-$ cat results/all_greetings/first_all_greetings.txt
-Hello Alice!
-Hello Bob!
-Hello Charlie!
+$ cat results/group_greetings/all_greetings.txt
+Hello Alice, Bob, Charlie!
 
-$ cat results/individual_greetings/Alice.txt 
+$ cat results/greeting_files/Alice_output.txt
 Hello Alice!
 ```
 
