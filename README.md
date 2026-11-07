@@ -425,44 +425,36 @@ work/
 To specify a different output directory, different from `results/`:
 
 ```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' --batch "second" -output-dir my_results -resume
+nextflow run scripts/hello-greeetings.nf --input names.txt -output-dir my_results -resume
 ```
 
 Now all the files are in the `my_results/` folder, and the processes were cached from the previous run:
 
 ```bash
-Nextflow 26.10.5 is available - Please consider updating your version to it
+ N E X T F L O W   ~  version 26.10.5
 
- N E X T F L O W   ~  version 26.10.4
+Launching `scripts/hello-greeetings.nf` [magical_engelbart] revision: 88b8cd4c7d
 
-Launching `scripts/hello-greeetings.nf` [cheesy_shockley] revision: 64301b6531
-
-Input string: Alice,C,Bob,A,Charlie
-Input string channel: DataflowBroadcast around DataflowStream[?]
-executor >  local (1)
-[a1/6a8da6] CREATE_GREETINGS:SAVE_GREETINGS (2) [100%] 3 of 3, cached: 3 ✔
-[22/58d828] CREATE_GREETINGS:COLLECT_GREETINGS  [100%] 1 of 1 ✔
-Input name: Alice
-Input string: Alice,C,Bob,A,Charlie
-Input name: C
-Input name: Bob
-Input name: A
-Input name: Charlie
-Greetings: Hello Alice!
-Greetings: Hello Bob!
-Greetings: Hello Charlie!
-All greetings: [Hello Alice!, Hello Bob!, Hello Charlie!]
+Input parameter: names.txt
+[47/0987a7] CREATE_GREETINGS:SAY_HELLO (2) [100%] 3 of 3, cached: 3 ✔
+[74/97561e] CREATE_GREETINGS:ALL_GREETINGS [100%] 1 of 1, cached: 1 ✔
+Input channel: Alice
+Input channel: C
+Input channel: Bob
+Input channel: A
+Input channel: Charlie
+Collected names: [Alice, Bob, Charlie]
 
 Outputs:
 
   /home/svarona/Repositories/nextflow-101-sebibc/my_results
 
   greeting_files:
-    - individual_greetings/Charlie.txt
-    - individual_greetings/Bob.txt
-    - individual_greetings/Alice.txt
+    - greeting_files/Alice_output.txt
+    - greeting_files/Bob_output.txt
+    - greeting_files/Charlie_output.txt
 
-  all_greetings_file: all_greetings/second_all_greetings.txt
+  group_file: group_greetings/all_greetings.txt
 ```
 
 We can see that the work folder didn't change:
@@ -490,12 +482,12 @@ But we have all the files in this other folder
 ```bash
 $ tree my_results/
 my_results/
-├── all_greetings
-│   └── second_all_greetings.txt
-└── individual_greetings
-    ├── Alice.txt
-    ├── Bob.txt
-    └── Charlie.txt
+├── greeting_files
+│   ├── Alice_output.txt
+│   ├── Bob_output.txt
+│   └── Charlie_output.txt
+└── group_greetings
+    └── all_greetings.txt
 
 3 directories, 4 files
 ```
