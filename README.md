@@ -35,7 +35,7 @@ nextflow -version
 
 ## Hello world mini-script
 
-This is a minimal Nextflow script adapted from the official Nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf).
+This is a minimal Nextflow script adapted from the official Nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf). We are going to create this script as `min-hello-greeetings.nf`
 
 ```bash
 process SAY_HELLO {
@@ -117,7 +117,7 @@ Add to `workflow`:
 ```groovy
 publish:
 // Publish the greetings to output directory
-greeting_file = SAY_HELLO.out
+greeting_files = SAY_HELLO.out
 ```
 
 Add outside `workflow` or `process`:
@@ -172,27 +172,6 @@ script:
 echo "Hello ${name}!" > output.txt
 """
 ```
-
-If we run it without input:
-
-```bash
-nextflow run scripts/min-hello-greeetings.nf
-```
-
-And we will see something like this:
-
-```bash
- N E X T F L O W   ~  version 26.10.5
-
-Launching `scripts/min-hello-greeetings.nf` [jolly_ardinghelli] revision: 88b8cd4c7d
-
-WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
-Input parameter: null
-Missing `fromPath` parameter -- Check script 'scripts/hello-greeetings.nf' at line: 52 or see '.nextflow.log' file for more details
-```
-
-If we don't specify any input, as there's no default input in the code (we could have add it, but we didn't in this example), the pipeline crashes.
-
 
 So we should execute it as follows:
 
@@ -386,7 +365,7 @@ process ALL_GREETINGS {
 
     script:
     """
-    echo "Hello ${names}.join(', ')!" > 'all_greetings.txt'
+    echo "Hello ${names.join(', ')}!" > all_greetings.txt
     """
 }
 ```
@@ -470,46 +449,6 @@ If we execute it we can see that the one character names have been removed fron 
 This is an schema on how this mini-minipeline works:
 
 ![hello-greetings](./img/hello-greetings_schema.png)
-
-### See the runs and clean
-
-If we want to see all the Nextflow runs executed, we can run:
-
-We can execute:
-
-```bash
-nextflow log
-```
-
-And we will see all the processes that we executed, successfully or not:
-
-```bash
-TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION ID     SESSION ID                             COMMAND                                                                                                             
-2026-11-05 13:07:33     2.3s            serene_bernard          OK      f6990be1ea      8f292219-0c3d-48af-bfae-ecd404baa123   nextflow run scripts/min-hello-greeetings.nf                                                                        
-2026-11-05 13:08:45     -               gigantic_liskov         -       64301b6531      2f1cacf5-6023-4d45-9d6a-06f041ec772c   nextflow run scripts/min-hello-greeetings.nf                                                                            
-2026-11-05 13:09:08     2.5s            ridiculous_euclid       OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/min-hello-greeetings.nf --input names.txt                                
-2026-11-05 13:10:06     2.4s            cheesy_shockley         OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/min-hello-greeetings.nf --input names.txt -output-dir greetings -resume
-```
-
-We can see what can be cleaned in the work directories and previous runs just before a specific run (`cheesy_shockley` in this example):
-
-```bash
-nextflow clean -before cheesy_shockley -n
-```
-
-This produces output similar to the following:
-
-```bash
-Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/f9/44658bc7aba4cd5b07d9b411b03f29
-Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/32/b17aec35f72470398cc2f893058d28
-```
-
-Or simply clean all the previous log runs and work folders except the one we want to keep:
-
-```bash
-nextflow clean -f -but cheesy_shockley
-nextflow log
-```
 
 ## Example pipeline summary
 
