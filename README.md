@@ -96,8 +96,6 @@ Output files:
 
 ## Greetings complete-script
 
-### Overview
-
 This example introduces the fundamental concepts of Nextflow by building a simple workflow that generates greeting messages from a list of names.
 
 The workflow demonstrates how to:
@@ -109,6 +107,411 @@ The workflow demonstrates how to:
 5. Collect channel elements into a single list.
 6. Pass a collected list to a process that executes once for the complete group.
 7. Publish workflow outputs into organised directories.
+
+### Creation steps
+
+1. Publish the results to the `output-dir` directory:
+
+Add to `workflow`:
+
+```groovy
+publish:
+// Publish the greetings to output directory
+greeting_file = SAY_HELLO.out
+```
+
+Add outside `workflow` or `process`:
+
+```groovy
+output {
+    greeting_files {
+        path 'greeting_files'
+        mode 'copy'
+    }
+}
+```
+
+We can execute it with:
+
+```bash
+nextflow run scripts/min-hello-greeetings.nf -resume
+```
+
+We can see the chached process. And we can review the `results` folder with the `output.txt` inside the `greeting_files` file with "Hello world!"
+
+```bash
+ls results/greeting_files/output.txt
+cat results/greeting_files/output.txt
+```
+
+We can also run `nextflow log` and see our two past executions.
+
+2. Allow for an input in the command line. Starting with string.
+
+In the `workflow`:
+
+```groovy
+main:
+// Create a channel for the input string
+println "Input parameter: ${params.input}"
+input_ch = channel.of(params.input)
+println "Input channel print: ${input_ch}"
+input_ch.view { input -> "Input channel: ${input_ch}" }
+
+SAY_HELLO(input_ch)
+```
+
+Then in the `SAY_HELLO` process:
+
+```groovy
+input:
+val name
+
+script:
+"""
+echo "Hello ${name}!" > output.txt
+"""
+```
+
+If we run it without input:
+
+```bash
+nextflow run scripts/min-hello-greeetings.nf
+```
+
+And we will see something like this:
+
+```bash
+ N E X T F L O W   ~  version 26.10.5
+
+Launching `scripts/min-hello-greeetings.nf` [jolly_ardinghelli] revision: 88b8cd4c7d
+
+WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
+Input parameter: null
+Missing `fromPath` parameter -- Check script 'scripts/hello-greeetings.nf' at line: 52 or see '.nextflow.log' file for more details
+```
+
+If we don't specify any input, as there's no default input in the code (we could have add it, but we didn't in this example), the pipeline crashes.
+
+
+So we should execute it as follows:
+
+```bash
+nextflow run scripts/min-hello-greeetings.nf -resume --input "Alice"
+```
+
+We can see the output of the `println` for both the param and the channel, and also the output of the `.view()`.
+
+We can read the results in the output file:
+
+```bash
+ls results/greeting_files/output.txt
+cat results/greeting_files/output.txt
+```
+
+Now it says "Hello Alice!"
+
+As we can see, this generated more folders in the `work` folder, so every process is individual and can't overlap or override any other process:
+
+```bash
+$ tree -L 2 work/
+work/
+├── 2b
+│   └── bf9b0af4a803841bd89f4a83355bda
+├── 32
+│   └── b17aec35f72470398cc2f893058d28
+├── a1
+│   └── 6a8da6cec03f5e7015ada92fabef58
+├── e6
+│   └── 055833133c0eaffa0f15ff87751433
+└── f9
+    └── 44658bc7aba4cd5b07d9b411b03f29
+
+11 directories, 0 files
+```
+
+3. Accept a .txt file with a list of names as input
+
+Create the `names.txt` file with names:
+
+```bash
+Alice
+Bob
+Charlie
+```
+
+Then in the `workflow`, replace `chanel.of` with `chanel.fromPath`, remove the channel's `println`
+
+```groovy
+main:
+// Create a channel for the input string
+println "Input parameter: ${params.input}"
+input_ch = channel.fromPath(params.input)
+input_ch.view { input -> "Input channel: ${input_ch}" }
+```
+
+This will print the path to the file int he `output.txt` file. So we need to keep workinf in this. We will add `.splitText()` after the `channel.fromPath`
+
+```groovy
+main:
+// Create a channel for the input string
+println "Input parameter: ${params.input}"
+input_ch = channel
+  .fromPath(params.input)
+  .splpitText()
+```
+
+This will separate each name in a parallel tasks, but they will contain a trailing new line. We will remove it with `.map` and `.trim()`
+
+```groovy
+main:
+// Create a channel for the input string
+println "Input parameter: ${params.input}"
+input_ch = channel
+  .fromPath(params.input)
+  .splpitText()
+  .map { it.trim() }
+```
+
+Now each name will have separated tasks, but all of them will have the same output file name, that will produce an error, so we need to change it in the `SAY_HELLO` process:
+
+```groovy
+output:
+path '*_output.txt', emit: results
+
+script:
+"""
+echo "Hello ${name}!" > ${name}_output.txt
+"""
+```
+
+Now we can execute it as follows and change the `-output-dir`
+
+```bash
+nextflow run scripts/min-hello-greeetings.nf -resume --input names.txt -output-dir greetings
+```
+
+Now we can see that in the results folder we are going to have one file per name in the list:
+
+```bash
+ls greetings/greeting_files/
+cat greetings/greeting_files/Alice_output.txt
+```
+
+The results folder should look like this:
+
+```text
+results/
+├── greeting_files
+│   ├── Alice_output.txt
+│   ├── Bob_output.txt
+│   └── Charlie_output.txt
+└── group_greetings
+    └── all_greetings.txt
+```
+
+Each of them contains only the corresponding name.
+
+4. Create a nemed workflow to run all the processes.
+
+We will create a `CREATE_GREETINGS` named workflow that calls for `SAY_HELLO`
+
+```groovy
+workflow CREATE_GREETINGS {
+    take:
+    name
+
+    main:
+    SAY_HELLO(name)
+
+    emit:
+    greeting_files = SAY_HELLO.out.results
+}
+```
+
+In the `workflow`, replace the `SAY_HELLO` process by the `CREATE_GREETINGS` workflow and replace it in the `publish` block:
+
+```groovy
+main:
+// Create a channel for the input string
+println "Input parameter: ${params.input}"
+input_ch = channel.of(params.input)
+input_ch.view { input -> "Input channel: ${input_ch}" }
+
+CREATE_GREETINGS(input_ch)
+
+publish:
+// Publish the greetings to output directory
+greeting_file = CREATE_GREETINGS.out.greeting_files
+```
+
+This will just execute the same proceess as the previous execution.
+
+It is a nonsense to have a named workflow to call a single process so we will create another process.
+
+5. Create a second process to gather all names:
+
+Create the new `ALL_GREETINGS` process:
+
+```groovy
+process ALL_GREETINGS {
+    input:
+    names
+
+    output:
+    path 'all_greetings.txt', emit: group_results
+
+    script:
+    """
+    echo "Hello ${names}!" > 'all_greetings.txt'
+    """
+}
+```
+
+This will generate a file with:
+
+```text
+Hello [Alice, Bob, Charlie]!
+```
+
+So we need yo join the names separed by `,`
+
+```groovy
+process ALL_GREETINGS {
+    input:
+    names
+
+    output:
+    path 'all_greetings.txt', emit: group_results
+
+    script:
+    """
+    echo "Hello ${names}.join(', ')!" > 'all_greetings.txt'
+    """
+}
+```
+
+Add it tho the `CREATE_GREETINGS` workflow with the corresponding `.view()` of the collected names:
+
+```groovy
+workflow CREATE_GREETINGS {
+    take:
+    name
+
+    main:
+    SAY_HELLO(name)
+    name.collect().view { names -> "Collected names: ${names}" }
+    ALL_GREETINGS(name.collect())
+
+    emit:
+    greeting_files = SAY_HELLO.out.results
+    group_greetings = ALL_GREETINGS.out.group_results
+}
+```
+
+Add the results to the main workflow:
+
+```groovy
+publish:
+// Publish the greetings to output directory
+greeting_file = CREATE_GREETINGS.out.greeting_files
+group_file = CREATE_GREETINGS.out.group_greetings
+```
+
+Add the results to the `output` block
+
+```groovy
+group_file {
+    path 'group_greetings'
+    mode 'copy'
+}
+```
+
+And we can now execute it as before:
+
+```bash
+nextflow run scripts/min-hello-greeetings.nf -resume --input names.txt -output-dir greetings
+```
+
+Now we can see that in the results folder we have the new folder with all the greetings:
+
+```bash
+ls greetings/group_greetings/
+cat greetings/group_greetings/all_greetings.txt
+```
+
+It contains a greeting for all the names.
+
+6. Filter results. We are going to add some one letter (no names) to the input file, and filter those before processing.
+
+We will modify the `names.txt` file as:
+
+```text
+Alice
+C
+Bob
+A
+Charlie
+```
+
+Then, in the `CREATE_GREETINGS` workflow, we will add a new channel for the filtered names and use it in the calls:
+
+```groovy
+    main:
+    // Filter names
+    filtered_names = name.filter { names -> names.size() >= 2 }
+    SAY_HELLO(filtered_names)
+    filtered_names.collect().view { names -> "Collected names: ${names}" }
+    ALL_GREETINGS(filtered_names.collect())
+```
+
+If we execute it we can see that the one character names have been removed fron the initial channel.
+
+This is an schema on how this mini-minipeline works:
+
+![hello-greetings](./img/hello-greetings_schema.png)
+
+### See the runs and clean
+
+If we want to see all the Nextflow runs executed, we can run:
+
+We can execute:
+
+```bash
+nextflow log
+```
+
+And we will see all the processes that we executed, successfully or not:
+
+```bash
+TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION ID     SESSION ID                             COMMAND                                                                                                             
+2026-11-05 13:07:33     2.3s            serene_bernard          OK      f6990be1ea      8f292219-0c3d-48af-bfae-ecd404baa123   nextflow run scripts/min-hello-greeetings.nf                                                                        
+2026-11-05 13:08:45     -               gigantic_liskov         -       64301b6531      2f1cacf5-6023-4d45-9d6a-06f041ec772c   nextflow run scripts/min-hello-greeetings.nf                                                                            
+2026-11-05 13:09:08     2.5s            ridiculous_euclid       OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/min-hello-greeetings.nf --input names.txt                                
+2026-11-05 13:10:06     2.4s            cheesy_shockley         OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/min-hello-greeetings.nf --input names.txt -output-dir greetings -resume
+```
+
+We can see what can be cleaned in the work directories and previous runs just before a specific run (`cheesy_shockley` in this example):
+
+```bash
+nextflow clean -before cheesy_shockley -n
+```
+
+This produces output similar to the following:
+
+```bash
+Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/f9/44658bc7aba4cd5b07d9b411b03f29
+Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/32/b17aec35f72470398cc2f893058d28
+```
+
+Or simply clean all the previous log runs and work folders except the one we want to keep:
+
+```bash
+nextflow clean -f -but cheesy_shockley
+nextflow log
+```
+
+## Example pipeline summary
 
 The example uses two processes:
 
@@ -321,221 +724,6 @@ results/
 │   └── Charlie_output.txt
 └── group_greetings
     └── all_greetings.txt
-```
-
-This is an schema on how this mini-minipeline works:
-
-![hello-greetings](./img/hello-greetings_schema.png)
-
-### Running the workflow
-
-#### No input run
-
-The script is stored in the `scripts/hello-greeetings.nf` folder, so it is executed as follows:
-
-```bash
-nextflow run scripts/hello-greeetings.nf
-```
-
-And we will see something like this:
-
-```bash
- N E X T F L O W   ~  version 26.10.5
-
-Launching `scripts/hello-greeetings.nf` [jolly_ardinghelli] revision: 88b8cd4c7d
-
-WARN: Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
-Input parameter: null
-Missing `fromPath` parameter -- Check script 'scripts/hello-greeetings.nf' at line: 52 or see '.nextflow.log' file for more details
-```
-
-If we don't specify any input, as there's no default input in the code (we could have add it, but we didn't in this example), the pipeline crashes.
-
-#### Default run
-
-The script is stored in the `scripts/hello-greeetings.nf` folder, so it is executed as follows:
-
-```bash
-nextflow run scripts/hello-greeetings.nf --input  names.txt
-```
-
-We will see something like this:
-
-```bash
- N E X T F L O W   ~  version 26.10.5
-
-Launching `scripts/hello-greeetings.nf` [big_swartz] revision: 88b8cd4c7d
-
-Input parameter: names.txt
-executor >  local (4)
-[ac/976994] CREATE_GREETINGS:SAY_HELLO (2) [100%] 3 of 3 ✔
-[36/f7a751] CREATE_GREETINGS:ALL_GREETINGS [100%] 1 of 1 ✔
-Input channel: Alice
-Input channel: C
-Input channel: Bob
-Input channel: A
-Input channel: Charlie
-Collected names: [Alice, Bob, Charlie]
-
-Outputs:
-
-  /home/svarona/Repositories/nextflow-101-sebibc/results
-
-  greeting_files:
-    - greeting_files/Bob_output.txt
-    - greeting_files/Charlie_output.txt
-    - greeting_files/Alice_output.txt
-
-  group_file: group_greetings/all_greetings.txt
-```
-
-We can see that the results were saved into the `results/` folder:
-
-We can read the content of the different files:
-
-```bash
-$ cat results/group_greetings/all_greetings.txt
-Hello Alice, Bob, Charlie!
-
-$ cat results/greeting_files/Alice_output.txt
-Hello Alice!
-```
-
-As we can see, this generated more folders in the `work` folder, so every process is individual and can't overlap or override any other process:
-
-```bash
-$ tree -L 2 work/
-work/
-├── 2b
-│   └── bf9b0af4a803841bd89f4a83355bda
-├── 32
-│   └── b17aec35f72470398cc2f893058d28
-├── a1
-│   └── 6a8da6cec03f5e7015ada92fabef58
-├── e6
-│   └── 055833133c0eaffa0f15ff87751433
-└── f9
-    └── 44658bc7aba4cd5b07d9b411b03f29
-
-11 directories, 0 files
-```
-
-#### Specify output directory
-
-To specify a different output directory, different from `results/`:
-
-```bash
-nextflow run scripts/hello-greeetings.nf --input names.txt -output-dir my_results -resume
-```
-
-Now all the files are in the `my_results/` folder, and the processes were cached from the previous run:
-
-```bash
- N E X T F L O W   ~  version 26.10.5
-
-Launching `scripts/hello-greeetings.nf` [magical_engelbart] revision: 88b8cd4c7d
-
-Input parameter: names.txt
-[47/0987a7] CREATE_GREETINGS:SAY_HELLO (2) [100%] 3 of 3, cached: 3 ✔
-[74/97561e] CREATE_GREETINGS:ALL_GREETINGS [100%] 1 of 1, cached: 1 ✔
-Input channel: Alice
-Input channel: C
-Input channel: Bob
-Input channel: A
-Input channel: Charlie
-Collected names: [Alice, Bob, Charlie]
-
-Outputs:
-
-  /home/svarona/Repositories/nextflow-101-sebibc/my_results
-
-  greeting_files:
-    - greeting_files/Alice_output.txt
-    - greeting_files/Bob_output.txt
-    - greeting_files/Charlie_output.txt
-
-  group_file: group_greetings/all_greetings.txt
-```
-
-We can see that the work folder didn't change:
-
-```bash
-work/
-├── 22
-│   └── 58d828b883ce603eeb1efe623eb2a7
-├── 2b
-│   └── bf9b0af4a803841bd89f4a83355bda
-├── 32
-│   └── b17aec35f72470398cc2f893058d28
-├── a1
-│   └── 6a8da6cec03f5e7015ada92fabef58
-├── e6
-│   └── 055833133c0eaffa0f15ff87751433
-└── f9
-    └── 44658bc7aba4cd5b07d9b411b03f29
-
-13 directories, 0 files
-```
-
-But we have all the files in this other folder
-
-```bash
-$ tree my_results/
-my_results/
-├── greeting_files
-│   ├── Alice_output.txt
-│   ├── Bob_output.txt
-│   └── Charlie_output.txt
-└── group_greetings
-    └── all_greetings.txt
-
-3 directories, 4 files
-```
-
-## See the runs and clean
-
-If we want to see all the Nextflow runs executed, we can run:
-
-We can execute:
-
-```bash
-nextflow log
-```
-
-And we will see all the processes that we executed, successfully or not:
-
-```bash
-TIMESTAMP               DURATION        RUN NAME                STATUS  REVISION ID     SESSION ID                             COMMAND                                                                                                             
-2026-11-05 13:07:33     2.3s            serene_bernard          OK      f6990be1ea      8f292219-0c3d-48af-bfae-ecd404baa123   nextflow run scripts/min-hello-greeetings.nf                                                                        
-2026-11-05 13:08:45     -               gigantic_liskov         -       64301b6531      2f1cacf5-6023-4d45-9d6a-06f041ec772c   nextflow run scripts/hello-greeetings.nf                                                                            
-2026-11-05 13:09:08     2.5s            ridiculous_euclid       OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie --batch first                                
-2026-11-05 13:10:06     2.4s            cheesy_shockley         OK      64301b6531      faa8d65a-d3d3-4847-9f96-2318cd010ccd   nextflow run scripts/hello-greeetings.nf --input Alice,C,Bob,A,Charlie --batch second -output-dir my_results -resume
-```
-
-We could re-run a Nextflow revision using:
-
-```bash
-nextflow run scripts/hello-greeetings.nf --input 'Alice,C,Bob,A,Charlie' -output-dir my_results --batch second -resume ridiculous_euclid
-```
-
-We can see what can be cleaned in the work directories and previous runs just before a specific run (`cheesy_shockley` in this example):
-
-```bash
-nextflow clean -before cheesy_shockley -n
-```
-
-This produces output similar to the following:
-
-```bash
-Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/f9/44658bc7aba4cd5b07d9b411b03f29
-Would remove /home/svarona/Repositories/nextflow-101-sebibc/work/32/b17aec35f72470398cc2f893058d28
-```
-
-Or simply clean all the previous log runs and work folders except the one we want to keep:
-
-```bash
-nextflow clean -f -but cheesy_shockley
-nextflow log
 ```
 
 ## Creating a pipeline with nf-core tools
