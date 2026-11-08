@@ -8,6 +8,25 @@ All the scripts that will be used or created during the training are available i
 
 [Here](https://docs.seqera.io/nextflow/?__hstc=247481240.ccb52e68b4484858da3c13c7629ef9f4.1793699689260.1793699689260.1793704847541.2&__hssc=247481240.1.1793704847541&__hsfp=5114929bcbc4071300a47f18b670c9fc) you can find the official Nextflow documentation if you need to go deeper into it.
 
+## Contents
+
+- [Set-up](#set-up)
+- [Hello world mini-script](#hello-world-mini-script)
+- [Greetings complete-script](#greetings-complete-script)
+  - [Creation steps](#creation-steps)
+  - [Example pipeline summary](#example-pipeline-summary)
+    - [Entry workflow](#entry-workflow)
+    - [Workflow outputs](#workflow-outputs)
+- [Creating a pipeline with nf-core tools](#creating-a-pipeline-with-nf-core-tools)
+  - [1. Main pipeline](#1-main-pipeline)
+  - [2. Main workflow](#2-main-workflow)
+  - [3. Modules](#3-modules)
+  - [4. `nextflow.config`](#4-nextflowconfig)
+  - [5. `conf/` folder](#5-conf-folder)
+  - [6. Executing the test profile](#6-executing-the-test-profile)
+  - [7. Installing additional modules](#7-installing-additional-modules)
+  - [8. Final run](#8-final-run)
+
 ## Set-up
 
 For this workshop we will need Nextflow >= 25.10.2 and any of Singularity, docker or conda.
@@ -449,6 +468,8 @@ If we execute it we can see that the one character names have been removed fron 
 This is an schema on how this mini-minipeline works:
 
 ![hello-greetings](./img/hello-greetings_schema.png)
+
+We can jump directly to [Creating a pipeline with nf-core tools](#creating-a-pipeline-with-nf-core-tools)
 
 ## Example pipeline summary
 
