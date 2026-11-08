@@ -737,7 +737,7 @@ nf-core pipeline create
 We are going to follow the interactive CLI to select what we want or do not want. This command just created all these files:
 
 ```bash
-bu-isciii-test-pipeline/
+bu-isciii-test_pipeline/
 ├── CHANGELOG.md
 ├── CITATIONS.md
 ├── LICENSE
@@ -793,7 +793,7 @@ bu-isciii-test-pipeline/
 ├── ro-crate-metadata.json
 ├── subworkflows
 │   ├── local
-│   │   └── utils_nfcore_test-pipeline_pipeline
+│   │   └── utils_nfcore_test_pipeline_pipeline
 │   │       └── main.nf
 │   └── nf-core
 │       ├── utils_nextflow_pipeline
@@ -826,7 +826,7 @@ bu-isciii-test-pipeline/
 │   ├── default.nf.test
 │   └── nextflow.config
 └── workflows
-    └── test-pipeline.nf
+    └── test_pipeline.nf
 
 22 directories, 68 files
 ```
@@ -840,10 +840,10 @@ This script is the **entry point and orchestrator** of an nf-core pipeline. It m
 #### 1. Imports
 
 ```groovy
-include { TEST_PIPELINE }           from './workflows/test-pipeline'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline' 
-include { PIPELINE_COMPLETION }     from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
-include { getGenomeAttribute }      from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
+include { TEST_PIPELINE }           from './workflows/test_pipeline'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test_pipeline_pipeline' 
+include { PIPELINE_COMPLETION }     from './subworkflows/local/utils_nfcore_test_pipeline_pipeline'
+include { getGenomeAttribute }      from './subworkflows/local/utils_nfcore_test_pipeline_pipeline'
 ```
 
 Three types of reusable components are imported:
@@ -998,6 +998,7 @@ workflow TEST_PIPELINE {
     multiqc_methods_description
     outdir
 ```
+
 `take:` defines the inputs of a named workflow. This allows the workflow to be called from another workflow and makes its interface explicit. In this specific case it takes the channel for the samplesheet, some configuration for multiqc and the path to the outputdirectory.
 
 This was invoked like this in the previous script:
@@ -1040,7 +1041,7 @@ ch_multiqc_files = ch_multiqc_files.mix(
 
 `mix()` combines emissions from multiple channels into one channel.
 
-Here, `FASTQC.out.zip` is the output of the [`fastqc` module](./bu-isciii-test-pipeline/modules/nf-core/fastqc/main.nf), and contains metadata (meta) together with the generated ZIP file. The `map` operator extracts only the file because MultiQC needs the files themselves.
+Here, `FASTQC.out.zip` is the output of the [`fastqc` module](./bu-isciii-test_pipeline/modules/nf-core/fastqc/main.nf), and contains metadata (meta) together with the generated ZIP file. The `map` operator extracts only the file because MultiQC needs the files themselves.
 
 ##### meta
 
@@ -1061,7 +1062,7 @@ For example:
 
 The `meta` object contains information that identifies and describes the sample, such as its `id` or whether the reads are paired-end or not, and it can be extended with additional metadata when needed.
 
-The `meta` object is created when the input samplesheet is parsed during [`PIPELINE_INITIALISATION`](./bu-isciii-test-pipeline/subworkflows/local/utils_nfcore_test-pipeline_pipeline/main.nf). 
+The `meta` object is created when the input samplesheet is parsed during [`PIPELINE_INITIALISATION`](./bu-isciii-test_pipeline/subworkflows/local/utils_nfcore_test_pipeline_pipeline/main.nf). 
 
 Here, the input samplesheet is parsed:
 
@@ -1220,7 +1221,7 @@ The resulting information is written to a YAML file with `collectFile()`:
 ```groovy
 .collectFile(
     storeDir: "${outdir}/pipeline_info",
-    name: 'test-pipeline_software_mqc_versions.yml',
+    name: 'test_pipeline_software_mqc_versions.yml',
     sort: true,
     newLine: true
 )
@@ -1308,7 +1309,7 @@ Finally, everything is assembled into the input structure expected by the MultiQ
 MULTIQC(
     ch_multiqc_files.flatten().collect().map { files ->
         [
-            [id: 'test-pipeline'],
+            [id: 'test_pipeline'],
             files,
             multiqc_config ? file(...) : file(...),
             multiqc_logo ? file(...) : [],
@@ -1367,7 +1368,7 @@ label 'process_low'
 
 The label assigns the process to a named resource profile.
 
-The label itself does not specify CPU or memory. Those values are normally defined in the pipeline [configuration](./bu-isciii-test-pipeline/conf/base.config) that we will see later.
+The label itself does not specify CPU or memory. Those values are normally defined in the pipeline [configuration](./bu-isciii-test_pipeline/conf/base.config) that we will see later.
 
 In this case:
 
@@ -1389,7 +1390,7 @@ This allows the same module to use different resources depending on the executio
 conda "${moduleDir}/environment.yml"
 ```
 
-This tells Nextflow to use the Conda environment defined in [`environment.yml`](./bu-isciii-test-pipeline/modules/nf-core/fastqc/environment.yml).
+This tells Nextflow to use the Conda environment defined in [`environment.yml`](./bu-isciii-test_pipeline/modules/nf-core/fastqc/environment.yml).
 
 ###### Container
 
@@ -1469,7 +1470,7 @@ task.ext.when == null || task.ext.when
 
 The `when` block controls whether the process runs.
 
-The process runs when `task.ext.when` is not defined or evaluates to true in the [configuration file](./bu-isciii-test-pipeline/conf/modules.config).
+The process runs when `task.ext.when` is not defined or evaluates to true in the [configuration file](./bu-isciii-test_pipeline/conf/modules.config).
 
 This allows the process to be disabled through configuration without modifying the module itself.
 
@@ -1479,7 +1480,7 @@ This allows the process to be disabled through configuration without modifying t
 def args = task.ext.args ?: ''
 ```
 
-This retrieves optional additional FastQC arguments from the [configuration file](./bu-isciii-test-pipeline/conf/modules.config).
+This retrieves optional additional FastQC arguments from the [configuration file](./bu-isciii-test_pipeline/conf/modules.config).
 
 The operator `?:` means: Use `task.ext.args` if it has a value; otherwise use an empty string.
 
@@ -1660,7 +1661,7 @@ The `stub` block provides a lightweight replacement for the real process. Instea
 
 ### 4. nextflow.config
 
-In the main pipeline folder we have the initial configuration file called [`nextflow.config`](./bu-isciii-test-pipeline/nextflow.config). The `nextflow.config` file contains the configuration used to control how the pipeline is executed.
+In the main pipeline folder we have the initial configuration file called [`nextflow.config`](./bu-isciii-test_pipeline/nextflow.config). The `nextflow.config` file contains the configuration used to control how the pipeline is executed.
 
 It is mainly organised into the following sections:
 
@@ -1900,8 +1901,8 @@ The `manifest` block contains metadata about the pipeline:
 
 ```groovy
 manifest {
-    name            = 'bu-isciii/test-pipeline'
-    homePage        = 'https://github.com/bu-isciii/test-pipeline'
+    name            = 'bu-isciii/test_pipeline'
+    homePage        = 'https://github.com/bu-isciii/test_pipeline'
     description     = """Test pipeline for workshop"""
     mainScript      = 'main.nf'
     defaultBranch   = 'master'
@@ -1949,7 +1950,7 @@ The `monochromeLogs` setting is connected to `params.monochrome_logs`, so the co
 
 #### 12. modules configuration
 
-This is particularly important for the pipeline's processes/modules. [`conf/modules.config`](./bu-isciii-test-pipeline/conf/modules.config) is where module-specific configuration can be defined. We will see it later.
+This is particularly important for the pipeline's processes/modules. [`conf/modules.config`](./bu-isciii-test_pipeline/conf/modules.config) is where module-specific configuration can be defined. We will see it later.
 
 ```groovy
 includeConfig 'conf/modules.config'
@@ -1957,7 +1958,7 @@ includeConfig 'conf/modules.config'
 
 ### 5. `conf/` folder
 
-The [`conf/`](./bu-isciii-test-pipeline/conf/) directory contains configuration files that control how the pipeline is executed, including process resources, containers, test settings, and reference databases.
+The [`conf/`](./bu-isciii-test_pipeline/conf/) directory contains configuration files that control how the pipeline is executed, including process resources, containers, test settings, and reference databases.
 
 ```bash
 conf/
@@ -1989,11 +1990,11 @@ conf/
 
 #### 1. `base.config`
 
-[`base.config`](./bu-isciii-test-pipeline/conf/base.config) defines general defaults for processes. It provides general resource requirements and error-handling behaviour, which can then be refined for specific groups of processes using labels.
+[`base.config`](./bu-isciii-test_pipeline/conf/base.config) defines general defaults for processes. It provides general resource requirements and error-handling behaviour, which can then be refined for specific groups of processes using labels.
 
 #### 2. `modules.config`
 
-[`modules.config`](./bu-isciii-test-pipeline/conf/modules.config) provides configuration specific to individual modules/processes, for example:
+[`modules.config`](./bu-isciii-test_pipeline/conf/modules.config) provides configuration specific to individual modules/processes, for example:
 
 ```bash
     withName: FASTQC {
@@ -2011,7 +2012,7 @@ It can also configure things such as:
 
 #### 3. `<profile>.config`
 
-Finally, we have profile-specific config files such as [`test.config`](./bu-isciii-test-pipeline/conf/test.config). Their purpose is to provide a configuration specific to a given use case, such as performing a quick pipeline test. In this case, the goal is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
+Finally, we have profile-specific config files such as [`test.config`](./bu-isciii-test_pipeline/conf/test.config). Their purpose is to provide a configuration specific to a given use case, such as performing a quick pipeline test. In this case, the goal is to provide a lightweight configuration for running pipeline tests, typically with restricted resource requirements and test-specific settings.
 
 
 So, after all these configurations and params, summarizing the priority order is:
@@ -2037,8 +2038,29 @@ Now we can move forward to a quick test run. We can execute:
 
 > Note: I need a local file because my laptop does not have enough memory to run the test.
 
+```groovy
+process {
+    resourceLimits = [
+        cpus: 10,
+        memory: '6.GB',
+        time: '1.h'
+    ]
+
+    withName: FASTQC {
+        conda "/home/svarona/miniconda3/envs/fastqc"
+    }
+
+    withName: 'MULTIQC' {
+        conda "/home/svarona/miniconda3/envs/multiqc"
+    }
+    withName: FASTP {
+        conda "/home/svarona/miniconda3/envs/fastp"
+    }
+}
+```
+
 ```bash
-nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
+nextflow run bu-isciii-test_pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
 ```
 
 This will attempt to create the conda images unless you have them cached already.
@@ -2049,7 +2071,7 @@ And it will run something like this:
 
  N E X T F L O W   ~  version 26.10.5
 
-Launching `bu-isciii-test-pipeline/main.nf` [silly_koch] revision: a59a048366
+Launching `bu-isciii-test_pipeline/main.nf` [silly_koch] revision: a59a048366
 
 Input/output options
   input                     : https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_illumina_amplicon.csv
@@ -2069,17 +2091,17 @@ Core Nextflow options
   runName                   : silly_koch
   launchDir                 : /home/svarona/Repositories/nextflow-101-sebibc
   workDir                   : /home/svarona/Repositories/nextflow-101-sebibc/work
-  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline
+  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test_pipeline
   userName                  : svarona
   profile                   : test,conda
-  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline/nextflow.config,/home/svarona/Repositories/nextflow-101-sebibc/local.config
+  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test_pipeline/nextflow.config,/home/svarona/Repositories/nextflow-101-sebibc/local.config
 
 !! Only displaying parameters that differ from the pipeline defaults !!
 ------------------------------------------------------
 executor >  local (4)
 [32/566bd0] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE2_PE)     | 3 of 3 ✔
-[f9/d3ee2f] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test-pipeline) | 1 of 1 ✔
--[bu-isciii/test-pipeline] Pipeline completed successfully-
+[f9/d3ee2f] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test_pipeline) | 1 of 1 ✔
+-[bu-isciii/test_pipeline] Pipeline completed successfully-
 
 Completed at: 06-Nov-2026 18:10:21
 Duration    : 1m 41s
@@ -2101,6 +2123,29 @@ A lot of new files will be updated.
 
 We need to add this process to our main workflow.
 
+First import it:
+
+```bash
+include { FASTP                  } from '../modules/nf-core/fastp/main'
+```
+
+Then we will need to call it and pass the results to multiQC:
+
+```groovy
+    //
+    // MODULE: Run FastP
+    //
+    FASTP(
+        ch_samplesheet.map { meta, reads -> tuple(meta, reads, []) },
+        false,
+        false,
+        false,
+        )
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.map{ _meta, json -> json })
+```
+
+We should also add it to the `modules.config` file, but it's not needed for the test to run.
+
 ### 8. Final run
 
 And finally we can execute all the Pre-processing pipeline BUT we are going to use our custom samples using this samplesheet:
@@ -2115,7 +2160,7 @@ SAMPLE3_SE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/il
 Once created, we can run:
 
 ```bash
-nextflow run bu-isciii-test-pipeline/main.nf -profile test,conda --outdir preproqc_results -c local.config --input samplesheet.csv
+nextflow run bu-isciii-test_pipeline/main.nf -profile test,conda --outdir preproqc_results -c local.config --input samplesheet.csv
 ```
 
 We will see something like this:
@@ -2124,7 +2169,7 @@ We will see something like this:
 
  N E X T F L O W   ~  version 26.10.5
 
-Launching `bu-isciii-test-pipeline/main.nf` [pensive_tuckerman] revision: a59a048366
+Launching `bu-isciii-test_pipeline/main.nf` [pensive_tuckerman] revision: a59a048366
 
 Input/output options
   input                     : samplesheet.csv
@@ -2144,18 +2189,18 @@ Core Nextflow options
   runName                   : pensive_tuckerman
   launchDir                 : /home/svarona/Repositories/nextflow-101-sebibc
   workDir                   : /home/svarona/Repositories/nextflow-101-sebibc/work
-  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline
+  projectDir                : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test_pipeline
   userName                  : svarona
   profile                   : test,conda
-  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test-pipeline/nextflow.config, /home/svarona/Repositories/nextflow-101-sebibc/conda.config
+  configFiles               : /home/svarona/Repositories/nextflow-101-sebibc/bu-isciii-test_pipeline/nextflow.config, /home/svarona/Repositories/nextflow-101-sebibc/conda.config
 
 !! Only displaying parameters that differ from the pipeline defaults !!
 ------------------------------------------------------
 executor >  local (7)
 [07/38ff2c] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE1_PE)     [100%] 3 of 3 ✔
 [0a/78c977] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTP (SAMPLE3_SE)      [100%] 3 of 3 ✔
-[d0/1929f6] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test-pipeline) [100%] 1 of 1 ✔
--[bu-isciii/test-pipeline] Pipeline completed successfully-
+[d0/1929f6] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test_pipeline) [100%] 1 of 1 ✔
+-[bu-isciii/test_pipeline] Pipeline completed successfully-
 Completed at: 06-Nov-2026 18:44:21
 Duration    : 1m 28s
 CPU hours   : 0.1
