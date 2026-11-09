@@ -11,7 +11,7 @@
         "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
     },
 
-    "onCreateCommand": "./.devcontainer/setup.sh",
+    "onCreateCommand": "bash ./.devcontainer/setup.sh",
 
     "hostRequirements": {
         "cpus": 4,
