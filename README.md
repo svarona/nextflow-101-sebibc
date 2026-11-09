@@ -2006,15 +2006,16 @@ process {
         time: '1.h'
     ]
 
-    withName: FASTQC {
-        conda "/home/svarona/miniconda3/envs/fastqc"
+    withName: 'FASTQC' {
+        conda = '/home/svarona/miniconda3/envs/fastqc'
     }
 
     withName: 'MULTIQC' {
-        conda "/home/svarona/miniconda3/envs/multiqc"
+        conda = '/home/svarona/miniconda3/envs/multiqc'
     }
-    withName: FASTP {
-        conda "/home/svarona/miniconda3/envs/fastp"
+
+    withName: 'FASTP' {
+        conda = '/home/svarona/miniconda3/envs/fastp'
     }
 }
 ```
