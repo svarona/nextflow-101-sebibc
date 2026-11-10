@@ -31,7 +31,7 @@ All the scripts that will be used or created during the training are available i
 
 For this workshop we will need Nextflow >= 25.10.2 and any of Singularity, docker or conda.
 
-In the workshop we will be using **miniconda** for training purposes as it is quicker and easier to install.
+In the workshop we will be using either codespaces or **miniconda** for training purposes as it is quicker and easier to install. Codespaces has everything installed already.
 
 ### Miniconda installation
 
@@ -54,7 +54,7 @@ nextflow -version
 
 ## Hello world mini-script
 
-This is a minimal Nextflow script adapted from the official Nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf). We are going to create this script as `min-hello-greeetings.nf`
+This is a minimal Nextflow script adapted from the official Nextflow training [here](https://github.com/nextflow-io/training/blob/master/hello-nextflow/hello-greeetings.nf). We are going to create this script as `min-hello-greetings.nf`
 
 ```bash
 process SAY_HELLO {
@@ -79,7 +79,7 @@ workflow {
 We can just execute the script as follows:
 
 ```bash
-nextflow run scripts/min-hello-greeetings.nf
+nextflow run scripts/min-hello-greetings.nf
 ```
 
 We will see something like this:
@@ -89,7 +89,7 @@ Nextflow 26.10.5 is available - Please consider updating your version to it
 
  N E X T F L O W   ~  version 26.10.4
 
-Launching `scripts/min-hello-greeetings.nf` [serene_bernard] revision: f6990be1ea
+Launching `scripts/min-hello-greetings.nf` [serene_bernard] revision: f6990be1ea
 
 executor >  local (1)
 [f9/44658b] SAY_HELLO [100%] 1 of 1 ✔
@@ -153,7 +153,7 @@ output {
 We can execute it with:
 
 ```bash
-nextflow run scripts/min-hello-greeetings.nf -resume
+nextflow run scripts/min-hello-greetings.nf -resume
 ```
 
 We can see the chached process. And we can review the `results` folder with the `output.txt` inside the `greeting_files` file with "Hello world!"
@@ -195,7 +195,7 @@ echo "Hello ${name}!" > output.txt
 So we should execute it as follows:
 
 ```bash
-nextflow run scripts/min-hello-greeetings.nf -resume --input "Alice"
+nextflow run scripts/min-hello-greetings.nf -resume --input "Alice"
 ```
 
 We can see the output of the `println` for both the param and the channel, and also the output of the `.view()`.
@@ -286,7 +286,7 @@ echo "Hello ${name}!" > ${name}_output.txt
 Now we can execute it as follows and change the `-output-dir`
 
 ```bash
-nextflow run scripts/min-hello-greeetings.nf -resume --input names.txt -output-dir greetings
+nextflow run scripts/min-hello-greetings.nf -resume --input names.txt -output-dir greetings
 ```
 
 Now we can see that in the results folder we are going to have one file per name in the list:
@@ -428,7 +428,7 @@ group_file {
 And we can now execute it as before:
 
 ```bash
-nextflow run scripts/min-hello-greeetings.nf -resume --input names.txt -output-dir greetings
+nextflow run scripts/min-hello-greetings.nf -resume --input names.txt -output-dir greetings
 ```
 
 Now we can see that in the results folder we have the new folder with all the greetings:
