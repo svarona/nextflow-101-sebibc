@@ -175,7 +175,7 @@ main:
 println "Input parameter: ${params.input}"
 ch_input = channel.of(params.input)
 println "Input channel print: ${ch_input}"
-ch_input.view { input -> "Input channel: ${ch_input}" }
+ch_input.view { input -> "Input channel: ${input}" }
 
 SAY_HELLO(ch_input)
 ```
@@ -310,7 +310,7 @@ results/
 
 Each of them contains only the corresponding name.
 
-4. Create a nemed workflow to run all the processes.
+4. Create a named workflow to run all the processes.
 
 We will create a `CREATE_GREETINGS` named workflow that calls for `SAY_HELLO`
 

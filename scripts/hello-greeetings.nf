@@ -52,7 +52,7 @@ workflow {
     ch_input = channel
         .fromPath(params.input)
         .splitText()
-        .map { it.trim() }
+        .map { name -> name.trim() }
     ch_input.view { input -> "Input channel: ${input}" }
 
     // Emit a greeting
