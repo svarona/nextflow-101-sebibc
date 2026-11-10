@@ -49,14 +49,14 @@ workflow {
     main:
     // Create a channel from the input parameter
     println "Input parameter: ${params.input}"
-    input_ch = channel
+    ch_input = channel
         .fromPath(params.input)
         .splitText()
         .map { it.trim() }
-    input_ch.view { input -> "Input channel: ${input}" }
+    ch_input.view { input -> "Input channel: ${input}" }
 
     // Emit a greeting
-    CREATE_GREETINGS(input_ch)
+    CREATE_GREETINGS(ch_input)
 
     publish:
     // Publish the greeting(s) file(s)

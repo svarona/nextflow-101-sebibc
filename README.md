@@ -173,11 +173,11 @@ In the `workflow`:
 main:
 // Create a channel for the input string
 println "Input parameter: ${params.input}"
-input_ch = channel.of(params.input)
-println "Input channel print: ${input_ch}"
-input_ch.view { input -> "Input channel: ${input_ch}" }
+ch_input = channel.of(params.input)
+println "Input channel print: ${ch_input}"
+ch_input.view { input -> "Input channel: ${ch_input}" }
 
-SAY_HELLO(input_ch)
+SAY_HELLO(ch_input)
 ```
 
 Then in the `SAY_HELLO` process:
@@ -244,8 +244,8 @@ Then in the `workflow`, replace `chanel.of` with `chanel.fromPath`, remove the c
 main:
 // Create a channel for the input string
 println "Input parameter: ${params.input}"
-input_ch = channel.fromPath(params.input)
-input_ch.view { input -> "Input channel: ${input_ch}" }
+ch_input = channel.fromPath(params.input)
+ch_input.view { input -> "Input channel: ${ch_input}" }
 ```
 
 This will print the path to the file int he `output.txt` file. So we need to keep workinf in this. We will add `.splitText()` after the `channel.fromPath`
@@ -254,7 +254,7 @@ This will print the path to the file int he `output.txt` file. So we need to kee
 main:
 // Create a channel for the input string
 println "Input parameter: ${params.input}"
-input_ch = channel
+ch_input = channel
   .fromPath(params.input)
   .splpitText()
 ```
@@ -265,7 +265,7 @@ This will separate each name in a parallel tasks, but they will contain a traili
 main:
 // Create a channel for the input string
 println "Input parameter: ${params.input}"
-input_ch = channel
+ch_input = channel
   .fromPath(params.input)
   .splpitText()
   .map { it.trim() }
@@ -333,10 +333,10 @@ In the `workflow`, replace the `SAY_HELLO` process by the `CREATE_GREETINGS` wor
 main:
 // Create a channel for the input string
 println "Input parameter: ${params.input}"
-input_ch = channel.of(params.input)
-input_ch.view { input -> "Input channel: ${input_ch}" }
+ch_input = channel.of(params.input)
+ch_input.view { input -> "Input channel: ${ch_input}" }
 
-CREATE_GREETINGS(input_ch)
+CREATE_GREETINGS(ch_input)
 
 publish:
 // Publish the greetings to output directory
@@ -491,11 +491,11 @@ workflow {
     main:
     // Create a channel from the input parameter
     println "Input parameter: ${params.input}"
-    input_ch = channel
+    ch_input = channel
         .fromPath(params.input)
         .splitText()
         .map { it.trim() }
-    input_ch.view { input -> "Input channel: ${input}" }
+    ch_input.view { input -> "Input channel: ${input}" }
 ```
 
 This expression uses several Groovy and Nextflow features:
@@ -520,7 +520,7 @@ Charlie
 #### Invoking the workflow: CREATE_GREETINGS
 
 ```groovy
-CREATE_GREETINGS(input_ch)
+CREATE_GREETINGS(ch_input)
 ```
 
 The input channel is passed to `CREATE_GREETINGS`, which performs the filtering, transformation, and process execution steps.
