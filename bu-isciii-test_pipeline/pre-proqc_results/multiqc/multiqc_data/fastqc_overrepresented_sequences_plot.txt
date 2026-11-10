@@ -1,0 +1,11 @@
+Sample	Top overrepresented sequence	Sum of remaining overrepresented sequences
+SAMPLE1_PE_raw_1	1.85	73.4
+SAMPLE1_PE_raw_2	1.74	71.99000000000001
+SAMPLE1_PE_trim_1	1.94	74.08
+SAMPLE1_PE_trim_2	1.81	74.39
+SAMPLE2_PE_raw_1	3.04	74.07
+SAMPLE2_PE_raw_2	2.76	73.38
+SAMPLE2_PE_trim_1	2.99	74.86
+SAMPLE2_PE_trim_2	2.83	75.31
+SAMPLE3_SE_raw	1.85	73.4
+SAMPLE3_SE_trim	1.87	73.66

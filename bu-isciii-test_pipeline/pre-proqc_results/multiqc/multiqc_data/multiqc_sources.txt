@@ -1,0 +1,14 @@
+Module	Section	Sample Name	Source
+fastp	all_sections	SAMPLE1_PE	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/5/SAMPLE1_PE.fastp.json
+fastp	all_sections	SAMPLE2_PE	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/4/SAMPLE2_PE.fastp.json
+fastp	all_sections	SAMPLE3_SE	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/3/SAMPLE3_SE.fastp.json
+FastQC	all_sections	SAMPLE1_PE_raw_1	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/9/SAMPLE1_PE_raw_1_fastqc.zip
+FastQC	all_sections	SAMPLE1_PE_raw_2	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/10/SAMPLE1_PE_raw_2_fastqc.zip
+FastQC	all_sections	SAMPLE1_PE_trim_1	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/14/SAMPLE1_PE_trim_1_fastqc.zip
+FastQC	all_sections	SAMPLE1_PE_trim_2	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/15/SAMPLE1_PE_trim_2_fastqc.zip
+FastQC	all_sections	SAMPLE2_PE_raw_1	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/7/SAMPLE2_PE_raw_1_fastqc.zip
+FastQC	all_sections	SAMPLE2_PE_raw_2	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/8/SAMPLE2_PE_raw_2_fastqc.zip
+FastQC	all_sections	SAMPLE2_PE_trim_1	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/12/SAMPLE2_PE_trim_1_fastqc.zip
+FastQC	all_sections	SAMPLE2_PE_trim_2	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/13/SAMPLE2_PE_trim_2_fastqc.zip
+FastQC	all_sections	SAMPLE3_SE_raw	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/6/SAMPLE3_SE_raw_fastqc.zip
+FastQC	all_sections	SAMPLE3_SE_trim	/workspaces/nextflow-101-sebibc/pruebas/bu-isciii-test_pipeline/work/ff/385716ea9a1ecac316f2ce64e17a45/11/SAMPLE3_SE_trim_fastqc.zip

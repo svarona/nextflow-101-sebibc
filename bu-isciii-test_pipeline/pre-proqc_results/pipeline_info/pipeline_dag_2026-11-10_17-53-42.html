@@ -1,0 +1,160 @@
+<!--
+  ~ Copyright 2013-2026, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'primaryColor': '#B6ECE2',
+      'primaryTextColor': '#160F26',
+      'primaryBorderColor': '#065647',
+      'lineColor': '#545555',
+      'clusterBkg': '#BABCBD22',
+      'clusterBorder': '#DDDEDE',
+      'fontFamily': 'arial'
+    }
+  }
+}%%
+flowchart TB
+    subgraph " "
+    v0["channel.empty"]
+    v2["channel.fromList"]
+    v7["channel.empty"]
+    v8["channel.empty"]
+    v14["channel.empty"]
+    v16["channel.empty"]
+    v21["channel.empty"]
+    v23["channel.empty"]
+    v25["channel.empty"]
+    v27["channel.empty"]
+    v29["channel.empty"]
+    v31["channel.empty"]
+    v33["channel.empty"]
+    v35["discard_trimmed_pass"]
+    v36["save_trimmed_fail"]
+    v37["save_merged"]
+    v57[" "]
+    v67["channel.of"]
+    v72[" "]
+    v75[" "]
+    end
+    subgraph " "
+    v1["versions"]
+    v9[" "]
+    v11[" "]
+    v15["ch_fastqc_raw_html"]
+    v17["ch_fastqc_raw_zip"]
+    v19[" "]
+    v20["fastqc_raw_html"]
+    v22["ch_trim_json"]
+    v24["ch_trim_html"]
+    v26["ch_trim_log"]
+    v28["ch_trim_reads_fail"]
+    v30["ch_trim_reads_merged"]
+    v32["ch_fastqc_trim_html"]
+    v34["ch_fastqc_trim_zip"]
+    v39[" "]
+    v40["trim_reads_merged"]
+    v41["trim_reads_fail"]
+    v42["trim_log"]
+    v43["trim_html"]
+    v47[" "]
+    v48["fastqc_trim_html"]
+    v56[" "]
+    v82[" "]
+    v83[" "]
+    v84[" "]
+    v87["multiqc_report"]
+    end
+    subgraph "BUISCIII_TEST_PIPELINE [BUISCIII_TEST_PIPELINE]"
+    subgraph "BUISCIII_TEST_PIPELINE:TEST_PIPELINE [TEST_PIPELINE]"
+    subgraph "BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQ_TRIM_FASTP_FASTQC [FASTQ_TRIM_FASTP_FASTQC]"
+    v18(["FASTQC_RAW"])
+    v38(["FASTP"])
+    v46(["FASTQC_TRIM"])
+    v13(( ))
+    v44(( ))
+    end
+    v81(["MULTIQC"])
+    v10(( ))
+    v12(( ))
+    v49(( ))
+    v85(( ))
+    end
+    end
+    subgraph "PIPELINE_INITIALISATION [PIPELINE_INITIALISATION]"
+    v3(( ))
+    end
+    v0 --> v1
+    v2 --> v3
+    v7 --> v49
+    v8 --> v9
+    v10 --> v11
+    v14 --> v15
+    v16 --> v17
+    v13 --> v18
+    v18 --> v20
+    v18 --> v19
+    v18 --> v49
+    v21 --> v22
+    v23 --> v24
+    v25 --> v26
+    v27 --> v28
+    v29 --> v30
+    v31 --> v32
+    v33 --> v34
+    v35 --> v38
+    v36 --> v38
+    v37 --> v38
+    v12 --> v38
+    v38 --> v43
+    v38 --> v42
+    v38 --> v41
+    v38 --> v40
+    v38 --> v39
+    v38 --> v44
+    v38 --> v49
+    v44 --> v46
+    v46 --> v48
+    v46 --> v47
+    v46 --> v49
+    v49 --> v56
+    v57 --> v49
+    v67 --> v49
+    v72 --> v49
+    v75 --> v49
+    v49 --> v81
+    v81 --> v84
+    v81 --> v83
+    v81 --> v82
+    v81 --> v85
+    v85 --> v87
+    v3 --> v10
+    v3 --> v12
+    v12 --> v13
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>

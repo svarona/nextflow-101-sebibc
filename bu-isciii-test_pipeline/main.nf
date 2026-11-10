@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    bu-isciii/test-pipeline
+    bu-isciii/test_pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/bu-isciii/test-pipeline
+    Github : https://github.com/bu-isciii/test_pipeline
 ----------------------------------------------------------------------------------------
 */
 
@@ -13,10 +13,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { TEST_PIPELINE           } from './workflows/test-pipeline'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_test-pipeline_pipeline'
-
+include { TEST_PIPELINE  } from './workflows/test_pipeline'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_test_pipeline_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_test_pipeline_pipeline'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE

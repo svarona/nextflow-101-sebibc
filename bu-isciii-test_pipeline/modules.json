@@ -1,19 +1,19 @@
 {
-    "name": "bu-isciii/test-pipeline",
-    "homePage": "https://github.com/bu-isciii/test-pipeline",
+    "name": "bu-isciii/test_pipeline",
+    "homePage": "https://github.com/bu-isciii/test_pipeline",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
                     "fastp": {
                         "branch": "master",
-                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
-                        "installed_by": ["modules"]
+                        "git_sha": "697192edd1bd7a330a5edbc4eb2f0f69ecfbb6ce",
+                        "installed_by": ["fastq_trim_fastp_fastqc"]
                     },
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "18eb358065b06f2d3419e37383b002fe7db3da02",
-                        "installed_by": ["modules"]
+                        "installed_by": ["fastq_trim_fastp_fastqc", "modules"]
                     },
                     "multiqc": {
                         "branch": "master",
@@ -24,6 +24,11 @@
             },
             "subworkflows": {
                 "nf-core": {
+                    "fastq_trim_fastp_fastqc": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["subworkflows"]
+                    },
                     "utils_nextflow_pipeline": {
                         "branch": "master",
                         "git_sha": "c2b22d85f30a706a3073387f30380704fcae013b",

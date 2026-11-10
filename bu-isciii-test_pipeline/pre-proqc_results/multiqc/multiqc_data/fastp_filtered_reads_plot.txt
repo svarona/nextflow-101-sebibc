@@ -1,0 +1,4 @@
+Sample	Passed Filter	Low Quality	Too Many N	Low Complexity	Too Short	Too Long
+SAMPLE1_PE	48270.0	7126.0	0.0	nan	46.0	0.0
+SAMPLE2_PE	38404.0	4520.0	0.0	nan	38.0	0.0
+SAMPLE3_SE	26243.0	1462.0	0.0	nan	16.0	0.0

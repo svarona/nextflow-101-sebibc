@@ -25,7 +25,7 @@ All the scripts that will be used or created during the training are available i
   - [5. `conf/` folder](#5-conf-folder)
   - [6. Executing the test profile](#6-executing-the-test-profile)
   - [7. Installing additional modules](#7-installing-additional-modules)
-  - [8. Final run](#8-final-run)
+  - [8. Custom configuration and custom params](#8-custom-configuration-and-custom-params)
 
 ## Set-up
 
@@ -988,6 +988,8 @@ This is useful when the final set of inputs is assembled progressively.
 FastQC is called with the samplesheet channel:
 
 ```groovy
+ch_samplesheet.view { samplesheet -> "Samplesheet: ${samplesheet}" }
+
 FASTQC(ch_samplesheet)
 ```
 
@@ -1996,7 +1998,7 @@ For parameters:
 
 Now we can move forward to a quick test run. We can execute:
 
-> Note: I need a local file because my laptop does not have enough memory to run the test.
+> Note: If you run this in your local computer, make sure of the resources you have available with `htop` and use this local config to change the resources. In the codespaces you don't need to change anything.
 
 ```groovy
 process {
@@ -2005,23 +2007,11 @@ process {
         memory: '6.GB',
         time: '1.h'
     ]
-
-    withName: 'FASTQC' {
-        conda = '/home/svarona/miniconda3/envs/fastqc'
-    }
-
-    withName: 'MULTIQC' {
-        conda = '/home/svarona/miniconda3/envs/multiqc'
-    }
-
-    withName: 'FASTP' {
-        conda = '/home/svarona/miniconda3/envs/fastp'
-    }
 }
 ```
 
 ```bash
-nextflow run bu-isciii-test_pipeline/main.nf -profile test,conda --outdir qc_results -c local.config
+nextflow run bu-isciii-test_pipeline/main.nf -profile test,docker --outdir qc_results
 ```
 
 This will attempt to create the conda images unless you have them cached already.
@@ -2062,6 +2052,9 @@ Core Nextflow options
 executor >  local (4)
 [32/566bd0] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE2_PE)     | 3 of 3 ✔
 [f9/d3ee2f] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test_pipeline) | 1 of 1 ✔
+Samplesheet: [[id:SAMPLE1_PE, single_end:false], [/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz, /nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R2.fastq.gz]]
+Samplesheet: [[id:SAMPLE2_PE, single_end:false], [/nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R1.fastq.gz, /nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R2.fastq.gz]]
+Samplesheet: [[id:SAMPLE3_SE, single_end:true], [/nf-core/test-datasets/viralrecon/illumina/amplicon/sample1_R1.fastq.gz, /nf-core/test-datasets/viralrecon/illumina/amplicon/sample2_R1.fastq.gz]]
 -[bu-isciii/test_pipeline] Pipeline completed successfully-
 
 Completed at: 06-Nov-2026 18:10:21
@@ -2075,10 +2068,10 @@ Succeeded   : 4
 We can install additional software using the nf-core tools
 
 ```bash
-nf-core modules install
+nf-core subworkflows install
 ```
 
-Then, write the name of the module you want to add to the pipeline.
+Then, write the name of the module you want to add to the pipeline, `fastq_trim_fastp_fastqc` in this case.
 
 A lot of new files will be updated.
 
@@ -2087,7 +2080,7 @@ We need to add this process to our main workflow.
 First import it:
 
 ```bash
-include { FASTP                  } from '../modules/nf-core/fastp/main'
+include { FASTQ_TRIM_FASTP_FASTQC } from '../subworkflows/nf-core/fastq_trim_fastp_fastqc/main'
 ```
 
 Then we will need to call it and pass the results to multiQC:
@@ -2096,20 +2089,59 @@ Then we will need to call it and pass the results to multiQC:
     //
     // MODULE: Run FastP
     //
-    FASTP(
+    FASTQ_TRIM_FASTP_FASTQC(
         ch_samplesheet.map { meta, reads -> tuple(meta, reads, []) },
         false,
         false,
         false,
-        )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.map{ _meta, json -> json })
+        params.skip_fastp,
+        params.skip_fastqc
+    )
+
+ch_multiqc_files = FASTQ_TRIM_FASTP_FASTQC.out.trim_json.map { meta, json -> json }
+    .mix(FASTQ_TRIM_FASTP_FASTQC.out.fastqc_raw_zip.map { meta, raw_zip -> raw_zip })
+    .mix(FASTQ_TRIM_FASTP_FASTQC.out.fastqc_trim_zip.map { meta, trim_zip -> trim_zip })
 ```
 
-We should also add it to the `modules.config` file, but it's not needed for the test to run.
+Now we need to add the params to both the `nextflow.config`
 
-### 8. Final run
+```groovy
+params{
+    skip_fastqc = false
+    skip_fastp = false
+}
+```
 
-And finally we can execute all the Pre-processing pipeline BUT we are going to use our custom samples using this samplesheet:
+And we need to add it to the `nextflow_schema.json` inside `generic_options` is fine. You can look for the `Font Awesome icons that you like`
+
+```json
+"skip_fastqc": {
+    "type": "boolean",
+    "description": "Skip fastqc quality control step.",
+    "fa_icon": "fas fa-question-circle"
+},
+"skip_fastp": {
+    "type": "boolean",
+    "description": "Skip fastqc quality control step.",
+    "fa_icon": "fas fa-question-circle"
+}
+```
+
+We should also add it to the `modules.config` file, it's important because fastQC raw and fastQC trim have the same names, so we need to re-difine the prefix as follows:
+
+```groovy
+withName: '.*:.*:FASTQ_TRIM_FASTP_FASTQC:FASTQC_RAW' {
+    ext.args = '--quiet'
+    ext.prefix = { "${meta.id}_raw" }
+}
+
+withName: '.*:.*:FASTQ_TRIM_FASTP_FASTQC:FASTQC_TRIM' {
+    ext.args = '--quiet'
+    ext.prefix = { "${meta.id}_trim" }
+}
+```
+
+We can execute all the Pre-processing pipeline BUT we are going to use our custom samples using this samplesheet:
 
 ```bash
 sample,fastq_1,fastq_2
@@ -2121,7 +2153,7 @@ SAMPLE3_SE,https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/il
 Once created, we can run:
 
 ```bash
-nextflow run bu-isciii-test_pipeline/main.nf -profile test,conda --outdir preproqc_results -c local.config --input samplesheet.csv
+nextflow run bu-isciii-test_pipeline/main.nf -profile test,docker --outdir preproqc_results --input samplesheet.csv
 ```
 
 We will see something like this:
@@ -2158,14 +2190,76 @@ Core Nextflow options
 !! Only displaying parameters that differ from the pipeline defaults !!
 ------------------------------------------------------
 executor >  local (7)
-[07/38ff2c] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTQC (SAMPLE1_PE)     [100%] 3 of 3 ✔
-[0a/78c977] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:FASTP (SAMPLE3_SE)      [100%] 3 of 3 ✔
-[d0/1929f6] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test_pipeline) [100%] 1 of 1 ✔
+[c0/827127] BUI…IPELINE:TEST_PIPELINE:FASTQ_TRIM_FASTP_FASTQC:FASTQC_RAW (SAMPLE1_PE) [100%] 3 of 3 ✔
+[59/e41eea] BUI…EST_PIPELINE:TEST_PIPELINE:FASTQ_TRIM_FASTP_FASTQC:FASTP (SAMPLE2_PE) [100%] 3 of 3 ✔
+[1d/ef089e] BUI…PELINE:TEST_PIPELINE:FASTQ_TRIM_FASTP_FASTQC:FASTQC_TRIM (SAMPLE2_PE) [100%] 3 of 3 ✔
+[37/d6c48a] BUISCIII_TEST_PIPELINE:TEST_PIPELINE:MULTIQC (test_pipeline)              [100%] 1 of 1 ✔
 -[bu-isciii/test_pipeline] Pipeline completed successfully-
-Completed at: 06-Nov-2026 18:44:21
-Duration    : 1m 28s
+Completed at: 10-Nov-2026 17:16:35
+Duration    : 2m 11s
 CPU hours   : 0.1
-Succeeded   : 7
+Succeeded   : 10
 ```
 
 We can see the fastp was executed for the three samples.
+
+### 8. Custom configuration and custom params
+
+We can add `FASTP` to the `modules.config`, important double `"` not single `'`
+
+```groovy
+    withName: 'FASTP' {
+        ext.args = "--cut_mean_quality ${params.cut_mean_quality}"
+    }
+```
+
+And create a new param in the schema:
+
+```json
+"cut_mean_quality": {
+    "type": "integer",
+    "default": 20,
+    "description": "Minimum mean quality to keep a read.",
+    "fa_icon": "fas fa-scissors"
+},
+```
+
+And to the `nextflow.config`
+
+```
+    cut_mean_quality           = 20
+```
+
+And execute it:
+
+```bash
+nextflow run main.nf --outdir pre-proqc_results -profile test,docker -resume --input samplesheet.csv
+```
+
+We can also provide our custom `params.yaml` file that overwrittes `nextflow.config` file
+
+```
+cut_mean_quality: 30
+```
+
+And execute it like this:
+
+```bash
+nextflow run main.nf --outdir pre-proqc_results -profile test,docker -resume --input samplesheet.csv -params-file params.yaml
+```
+
+And finally we can provide a custom configuration file called `local.config` to configure processes' params that are not expose through pipeline params.
+
+```bash
+process {
+    withName: 'FASTP' {
+        ext.args = "--cut_front --cut_tail --trim_poly_x --cut_mean_quality ${params.cut_mean_quality} --qualified_quality_phred 30 --unqualified_percent_limit 10 --length_required 50"
+    }
+}
+```
+
+And finally run it like this:
+
+```bash
+nextflow run main.nf --outdir pre-proqc_results -profile test,docker -resume --input samplesheet.csv -params-file params.yaml -c local.config
+```

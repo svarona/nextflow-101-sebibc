@@ -1,0 +1,9 @@
+FASTP:
+  fastp: 1.4.0
+FASTQC_RAW:
+  fastqc: 0.13.0
+FASTQC_TRIM:
+  fastqc: 0.13.0
+Workflow:
+    bu-isciii/test_pipeline: v1.0.0dev
+    Nextflow: 26.10.5

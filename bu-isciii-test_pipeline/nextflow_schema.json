@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/bu-isciii/test-pipeline/master/nextflow_schema.json",
-    "title": "bu-isciii/test-pipeline pipeline parameters",
-    "description": "Test pipeline for workshop",
+    "$id": "https://raw.githubusercontent.com/bu-isciii/test_pipeline/main/nextflow_schema.json",
+    "title": "bu-isciii/test_pipeline pipeline parameters",
+    "description": "Test pipeline",
     "type": "object",
     "$defs": {
         "input_output_options": {
@@ -33,44 +33,6 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
-                }
-            }
-        },
-        "reference_genome_options": {
-            "title": "Reference genome options",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Reference genome related files and options required for the workflow.",
-            "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code"
-                },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "igenomes_base": {
-                    "type": "string",
-                    "description": "The base path to the igenomes reference files",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "default": "s3://ngi-igenomes/igenomes/"
                 }
             }
         },
@@ -207,6 +169,22 @@
                 "show_hidden": {
                     "type": "boolean",
                     "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+                },
+                "skip_fastqc": {
+                    "type": "boolean",
+                    "description": "Skip fastqc quality control step.",
+                    "fa_icon": "fas fa-question-circle"
+                },
+                "skip_fastp": {
+                    "type": "boolean",
+                    "description": "Skip fastp quality control step.",
+                    "fa_icon": "fas fa-question-circle"
+                },
+                "cut_mean_quality": {
+                    "type": "integer",
+                    "description": "Mean quality threshold for cutting adapters.",
+                    "default": 20,
+                    "fa_icon": "fas fa-question-circle"
                 }
             }
         }
@@ -214,9 +192,6 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
-        },
-        {
-            "$ref": "#/$defs/reference_genome_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

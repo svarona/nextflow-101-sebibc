@@ -1,4 +1,4 @@
-# bu-isciii/test-pipeline: Output
+# bu-isciii/test_pipeline: Output
 
 ## Introduction
 

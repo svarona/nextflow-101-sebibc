@@ -1,4 +1,4 @@
-# bu-isciii/test-pipeline: Citations
+# bu-isciii/test_pipeline: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
